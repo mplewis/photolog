@@ -1,16 +1,25 @@
 ---
+import MainLayout from "../layouts/MainLayout.astro";
 
+import { glob } from "glob";
+import path from "node:path";
+
+const paths = await glob("public/photos/**/*.jpg");
+const urls = paths.map((p) => path.relative("public", p));
+
+console.log({ urls });
+
+urls.sort();
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<MainLayout>
+  <div class="grid grid-cols-4">
+    {
+      urls.map((url) => (
+        <div class="aspect-square">
+          <img class="w-full h-full object-cover" src={url} />
+        </div>
+      ))
+    }
+  </div>
+</MainLayout>
