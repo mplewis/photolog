@@ -1,3 +1,5 @@
+import { useState } from "react";
+import classNames from "classnames";
 import Modal from "react-modal";
 
 export type Album = {
@@ -53,6 +55,8 @@ const Index = ({ albums }: { albums: Record<string, Album> }) => {
     }
   }
 
+  const [album, setAlbum] = useState<string>("_all");
+
   return (
     <>
       <Modal isOpen={false}>
@@ -68,8 +72,16 @@ const Index = ({ albums }: { albums: Record<string, Album> }) => {
           <div>
             {Object.entries(albums).map(([, { name }]) => (
               <button
-                className="px-4 text-sky-700 hover:text-sky-500 transition-all"
-                key={name}>
+                className={classNames(
+                  "px-4 text-sky-700 hover:text-sky-500 transition-all",
+                  {
+                    "font-bold": album === name,
+                  }
+                )}
+                key={name}
+                onClick={() =>
+                  album === name ? setAlbum("_all") : setAlbum(name)
+                }>
                 {name}
               </button>
             ))}
@@ -78,7 +90,7 @@ const Index = ({ albums }: { albums: Record<string, Album> }) => {
       </div>
 
       <div className="pt-24 grid grid-cols-3 s4:grid-cols-4 s5:grid-cols-5 s6:grid-cols-6 s7:grid-cols-7 s8:grid-cols-8 s9:grid-cols-9 s10:grid-cols-10 s11:grid-cols-11 s12:grid-cols-12">
-        {Object.entries(albumToPhotoset._all!).map(([key, photoset]) => (
+        {Object.entries(albumToPhotoset[album]!).map(([key, photoset]) => (
           <div className="aspect-square" key={key}>
             <picture>
               <source
