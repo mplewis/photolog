@@ -78,7 +78,8 @@ const Index = ({ albums }: { albums: Record<string, Album> }) => {
   const [current, setCurrent] = useState<{ album: string; photos: Photoset[] }>(
     { album: "_all", photos: albumToPhotoset._all! }
   );
-  const [selectedPhoto, setSelectedPhoto] = useState<Photoset | null>(null);
+  const [selected, setSelected] = useState<number | null>(null);
+  const selectedPhoto = selected ? current.photos[selected] ?? null : null;
 
   function setAlbum(name: string) {
     const photos = albumToPhotoset[name];
@@ -89,21 +90,26 @@ const Index = ({ albums }: { albums: Record<string, Album> }) => {
   const Modal = () => (
     <ReactModal
       isOpen={Boolean(selectedPhoto)}
-      onRequestClose={() => setSelectedPhoto(null)}
+      onRequestClose={() => setSelected(null)}
       style={modalStyle}>
       {selectedPhoto && (
-        <picture>
-          <source
-            type="image/jpeg"
-            srcSet={fullSizes
-              .map(({ size, width }) => `${selectedPhoto![size]} ${width}w`)
-              .join(", ")}
-          />
-          <img
-            className="w-full h-full object-scale-down cursor-pointer"
-            onClick={() => setSelectedPhoto(null)}
-          />
-        </picture>
+        <div className="flex flex-col h-full w-full">
+          <picture className="flex-grow">
+            <source
+              type="image/jpeg"
+              srcSet={fullSizes
+                .map(({ size, width }) => `${selectedPhoto![size]} ${width}w`)
+                .join(", ")}
+            />
+            <img
+              className="w-full h-full object-scale-down cursor-pointer"
+              onClick={() => setSelected(null)}
+            />
+          </picture>
+          <div className="bg-green-500">
+            <p>This is the filmstrip</p>
+          </div>
+        </div>
       )}
     </ReactModal>
   );
@@ -143,7 +149,7 @@ const Index = ({ albums }: { albums: Record<string, Album> }) => {
           <div
             className="aspect-square overflow-hidden cursor-pointer"
             key={i}
-            onClick={() => setSelectedPhoto(photoset)}>
+            onClick={() => setSelected(i)}>
             <picture>
               <source
                 type="image/jpeg"
