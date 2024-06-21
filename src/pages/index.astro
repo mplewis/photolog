@@ -4,7 +4,8 @@ import MainLayout from "../layouts/MainLayout.astro";
 import { glob } from "glob";
 import path from "node:path";
 
-const photoSetRe = /(^.+)_([^.]+).[A-Za-z]+$/;
+const albumRe = /(^.+)\/.+$/;
+const photosetRe = /(^.+)_([^.]+).[A-Za-z]+$/;
 
 const screenSizes = [
   { size: "s3", width: 450, columns: 3 },
@@ -31,6 +32,19 @@ const thumbSizes = [
   { size: "w846", width: 846 },
 ] as const;
 
+const albumDescs = {
+  bwca: { name: "Boundary Waters", desc: "Boundary Waters Canoe Area" },
+  japan: {
+    name: "Japan",
+    desc: "Photos from Japan: Tokyo, Kyoto, Hiroshima, and Osaka",
+  },
+  europe: { name: "Europe", desc: "Photos from France and Iceland" },
+  home: {
+    name: "Colorado",
+    desc: "Photos taken near where I live in Colorado",
+  },
+} as const;
+
 const sourceSizes = screenSizes
   .map(
     ({ width, columns }) =>
@@ -41,24 +55,50 @@ const sourceSizes = screenSizes
 const paths = await glob("public/photos/**/*.jpg");
 const urls = paths.map((p) => path.relative("public", p));
 
+const albums: Record<string, Set<string>> = {};
+urls.forEach((url) => {
+  const match1 = albumRe.exec(url);
+  const match2 = photosetRe.exec(url);
+  if (match1 && match2) {
+    const [, album] = match1;
+    const [, photoset] = match2;
+    if (!album || !photoset) return;
+
+    const a = path.relative("photos", album);
+    if (!albums[a]) albums[a] = new Set();
+    albums[a]!.add(photoset);
+  }
+});
+
 const grouped: Record<string, Record<string, string>> = {};
 urls.sort();
 urls.forEach((url) => {
-  const match = photoSetRe.exec(url);
+  const match = photosetRe.exec(url);
   if (match) {
-    const [, name, size] = match;
-    if (!name || !size) return;
-    if (!grouped[name]) grouped[name] = {};
-    grouped[name]![size] = url;
+    const [, photoset, size] = match;
+    if (!photoset || !size) return;
+    if (!grouped[photoset]) grouped[photoset] = {};
+    grouped[photoset]![size] = url;
   }
 });
 ---
 
 <MainLayout>
   <div class="fixed bg-white pt-4 pb-1 px-2 block w-full">
-    <div class="float-start">
-      <span class="site-logo inline-block text-5xl">Photolog</span>
-      <span class="inline-block ml-1">by Matt Lewis</span>
+    <div class="flex items-end justify-between">
+      <div>
+        <span class="site-logo inline-block text-5xl">Photolog</span>
+        <span class="inline-block ml-1">by Matt Lewis</span>
+      </div>
+      <div>
+        {
+          Object.entries(albumDescs).map(([, { name }]) => (
+            <button class="px-4 text-sky-700 hover:text-sky-500 transition-all">
+              {name}
+            </button>
+          ))
+        }
+      </div>
     </div>
   </div>
   <div
