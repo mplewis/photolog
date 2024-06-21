@@ -79,7 +79,8 @@ const Index = ({ albums }: { albums: Record<string, Album> }) => {
     { album: "_all", photos: albumToPhotoset._all! }
   );
   const [selected, setSelected] = useState<number | null>(null);
-  const selectedPhoto = selected ? current.photos[selected] ?? null : null;
+  const selectedPhoto =
+    selected !== null ? current.photos[selected] ?? null : null;
 
   function setAlbum(name: string) {
     const photos = albumToPhotoset[name];
@@ -93,8 +94,8 @@ const Index = ({ albums }: { albums: Record<string, Album> }) => {
       onRequestClose={() => setSelected(null)}
       style={modalStyle}>
       {selectedPhoto && (
-        <div className="flex flex-col h-full w-full">
-          <picture className="flex-grow">
+        <div className="flex flex-col w-full h-full">
+          <picture className="flex-grow pb-8" style={{ maxHeight: "90%" }}>
             <source
               type="image/jpeg"
               srcSet={fullSizes
@@ -106,8 +107,26 @@ const Index = ({ albums }: { albums: Record<string, Album> }) => {
               onClick={() => setSelected(null)}
             />
           </picture>
-          <div className="bg-green-500">
-            <p>This is the filmstrip</p>
+
+          <div className="bg-green-500 flex" style={{ maxHeight: "10%" }}>
+            {current &&
+              current.photos.map((photoset, i) => (
+                <div
+                  className="aspect-square overflow-hidden cursor-pointer shrink-0"
+                  key={i}
+                  onClick={() => setSelected(i)}>
+                  <picture>
+                    <source
+                      type="image/jpeg"
+                      sizes={gridSourceSizes}
+                      srcSet={thumbSizes
+                        .map(({ size, width }) => `${photoset[size]} ${width}w`)
+                        .join(", ")}
+                    />
+                    <img className="w-full h-full object-cover hover:scale-110 transition-all duration-300" />
+                  </picture>
+                </div>
+              ))}
           </div>
         </div>
       )}
