@@ -4,20 +4,72 @@ import MainLayout from "../layouts/MainLayout.astro";
 import { glob } from "glob";
 import path from "node:path";
 
+const photoSetRe = /(^.+)_([^.]+).[A-Za-z]+$/;
+
+const screenSizes = [
+  { size: "s3", width: 450, columns: 3 },
+  { size: "s4", width: 600, columns: 4 },
+  { size: "s5", width: 750, columns: 5 },
+  { size: "s6", width: 900, columns: 6 },
+  { size: "s7", width: 1050, columns: 7 },
+  { size: "s8", width: 1200, columns: 8 },
+  { size: "s9", width: 1350, columns: 9 },
+  { size: "s10", width: 1500, columns: 10 },
+  { size: "s11", width: 1650, columns: 11 },
+  { size: "s12", width: 1800, columns: 12 },
+] as const;
+
+const thumbSizes = [
+  { size: "w180", width: 180 },
+  { size: "w216", width: 216 },
+  { size: "w270", width: 270 },
+  { size: "w324", width: 324 },
+  { size: "w396", width: 396 },
+  { size: "w486", width: 486 },
+  { size: "w594", width: 594 },
+  { size: "w702", width: 702 },
+  { size: "w846", width: 846 },
+] as const;
+
+const sourceSizes = screenSizes
+  .map(
+    ({ width, columns }) =>
+      `(max-width: ${width - 1}px) ${(100 / columns).toFixed(2)}vw`
+  )
+  .join(",\n");
+
 const paths = await glob("public/photos/**/*.jpg");
 const urls = paths.map((p) => path.relative("public", p));
 
-console.log({ urls });
-
+const grouped: Record<string, Record<string, string>> = {};
 urls.sort();
+urls.forEach((url) => {
+  const match = photoSetRe.exec(url);
+  if (match) {
+    const [, name, size] = match;
+    if (!name || !size) return;
+    if (!grouped[name]) grouped[name] = {};
+    grouped[name]![size] = url;
+  }
+});
 ---
 
 <MainLayout>
-  <div class="grid grid-cols-4">
+  <div
+    class="grid grid-cols-3 s4:grid-cols-4 s5:grid-cols-5 s6:grid-cols-6 s7:grid-cols-7 s8:grid-cols-8 s9:grid-cols-9 s10:grid-cols-10 s11:grid-cols-11 s12:grid-cols-12">
     {
-      urls.map((url) => (
+      Object.entries(grouped).map(([, urls]) => (
         <div class="aspect-square">
-          <img class="w-full h-full object-cover" src={url} />
+          <picture>
+            <source
+              type="image/jpeg"
+              sizes={sourceSizes}
+              srcset={thumbSizes
+                .map(({ size, width }) => `${urls[size]} ${width}w`)
+                .join(", ")}
+            />
+            <img class="w-full h-full object-cover" />
+          </picture>
         </div>
       ))
     }
