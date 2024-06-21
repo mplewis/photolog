@@ -1,8 +1,46 @@
 ---
 import MainLayout from "../layouts/MainLayout.astro";
-import Index from "../components/Index.tsx";
+import IndexComp from "../components/Index.tsx";
+import type { Album } from "../components/Index.tsx";
+
+import { glob } from "glob";
+
+const pathRe = /^photos\/((.+)\/.+)_([^.]+).[A-Za-z]+$/;
+
+const albumMeta = {
+  bwca: { name: "Boundary Waters", desc: "Boundary Waters Canoe Area" },
+  japan: {
+    name: "Japan",
+    desc: "Photos from Japan: Tokyo, Kyoto, Hiroshima, and Osaka",
+  },
+  europe: { name: "Europe", desc: "Photos from France and Iceland" },
+  home: {
+    name: "Colorado",
+    desc: "Photos taken near where I live in Colorado",
+  },
+} as const;
+
+const urls = await glob("photos/**/*.jpg", { cwd: "public" });
+const albums: Record<string, Album> = {};
+
+for (const url of urls) {
+  const match = url.match(pathRe);
+  if (!match) throw new Error(`Could not parse path into album: ${url}`);
+  const [, photoset, album, size] = match;
+  if (!photoset || !album || !size)
+    throw new Error(`Path parsing regex is malformed`);
+
+  if (!albums[album]) {
+    const meta = albumMeta[album as keyof typeof albumMeta];
+    if (!albumMeta) throw new Error(`Album metadata not found for ${album}`);
+    albums[album] = { name: meta.name, desc: meta.desc, photosets: {} };
+  }
+  const a = albums[album]!;
+  if (!a.photosets[photoset]) a.photosets[photoset] = {};
+  a.photosets[photoset]![size] = url;
+}
 ---
 
 <MainLayout>
-  <Index />
+  <IndexComp client:only albums={albums} />
 </MainLayout>

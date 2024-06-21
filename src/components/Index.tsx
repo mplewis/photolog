@@ -1,8 +1,13 @@
-import { glob } from "glob";
-import path from "node:path";
+import Modal from "react-modal";
 
-const albumRe = /(^.+)\/.+$/;
-const photosetRe = /(^.+)_([^.]+).[A-Za-z]+$/;
+export type Album = {
+  /** Human-readable name of the album*/
+  name: string;
+  desc: string;
+  photosets: Record<string, Photoset>;
+};
+// TODO: Add metadata
+export type Photoset = Record<string, string>; // size -> url
 
 const screenSizes = [
   { size: "s3", width: 450, columns: 3 },
@@ -29,19 +34,6 @@ const thumbSizes = [
   { size: "w846", width: 846 },
 ] as const;
 
-const albumDescs = {
-  bwca: { name: "Boundary Waters", desc: "Boundary Waters Canoe Area" },
-  japan: {
-    name: "Japan",
-    desc: "Photos from Japan: Tokyo, Kyoto, Hiroshima, and Osaka",
-  },
-  europe: { name: "Europe", desc: "Photos from France and Iceland" },
-  home: {
-    name: "Colorado",
-    desc: "Photos taken near where I live in Colorado",
-  },
-} as const;
-
 const sourceSizes = screenSizes
   .map(
     ({ width, columns }) =>
@@ -49,70 +41,60 @@ const sourceSizes = screenSizes
   )
   .join(",\n");
 
-const paths = await glob("public/photos/**/*.jpg");
-const urls = paths.map((p) => path.relative("public", p));
+Modal.setAppElement("#app");
 
-const albums: Record<string, Set<string>> = {};
-urls.forEach((url) => {
-  const match1 = albumRe.exec(url);
-  const match2 = photosetRe.exec(url);
-  if (match1 && match2) {
-    const [, album] = match1;
-    const [, photoset] = match2;
-    if (!album || !photoset) return;
-
-    const a = path.relative("photos", album);
-    if (!albums[a]) albums[a] = new Set();
-    albums[a]!.add(photoset);
+const Index = ({ albums }: { albums: Record<string, Album> }) => {
+  const albumToPhotoset: Record<string, Photoset[]> = { _all: [] };
+  for (const { name, photosets: photos } of Object.values(albums)) {
+    albumToPhotoset[name] = [];
+    for (const [, photoset] of Object.entries(photos)) {
+      albumToPhotoset[name]!.push(photoset);
+      albumToPhotoset._all!.push(photoset);
+    }
   }
-});
 
-const grouped: Record<string, Record<string, string>> = {};
-urls.sort();
-urls.forEach((url) => {
-  const match = photosetRe.exec(url);
-  if (match) {
-    const [, photoset, size] = match;
-    if (!photoset || !size) return;
-    if (!grouped[photoset]) grouped[photoset] = {};
-    grouped[photoset]![size] = url;
-  }
-});
+  return (
+    <>
+      <Modal isOpen={false}>
+        <h1>Hi! I am a modal</h1>
+      </Modal>
 
-const Index = () => (
-  <>
-    <div className="fixed bg-white pt-4 pb-1 px-2 block w-full">
-      <div className="flex items-end justify-between">
-        <div>
-          <span className="site-logo inline-block text-5xl">Photolog</span>
-          <span className="inline-block ml-1">by Matt Lewis</span>
-        </div>
-        <div>
-          {Object.entries(albumDescs).map(([, { name }]) => (
-            <button className="px-4 text-sky-700 hover:text-sky-500 transition-all">
-              {name}
-            </button>
-          ))}
+      <div className="fixed bg-white pt-4 pb-1 px-2 block w-full">
+        <div className="flex items-end justify-between">
+          <div>
+            <span className="site-logo inline-block text-5xl">Photolog</span>
+            <span className="inline-block ml-1">by Matt Lewis</span>
+          </div>
+          <div>
+            {Object.entries(albums).map(([, { name }]) => (
+              <button
+                className="px-4 text-sky-700 hover:text-sky-500 transition-all"
+                key={name}>
+                {name}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
-    </div>
-    <div className="pt-24 grid grid-cols-3 s4:grid-cols-4 s5:grid-cols-5 s6:grid-cols-6 s7:grid-cols-7 s8:grid-cols-8 s9:grid-cols-9 s10:grid-cols-10 s11:grid-cols-11 s12:grid-cols-12">
-      {Object.entries(grouped).map(([, urls]) => (
-        <div className="aspect-square">
-          <picture>
-            <source
-              type="image/jpeg"
-              sizes={sourceSizes}
-              srcset={thumbSizes
-                .map(({ size, width }) => `${urls[size]} ${width}w`)
-                .join(", ")}
-            />
-            <img className="w-full h-full object-cover" />
-          </picture>
-        </div>
-      ))}
-    </div>
-  </>
-);
+
+      <div className="pt-24 grid grid-cols-3 s4:grid-cols-4 s5:grid-cols-5 s6:grid-cols-6 s7:grid-cols-7 s8:grid-cols-8 s9:grid-cols-9 s10:grid-cols-10 s11:grid-cols-11 s12:grid-cols-12">
+        {Object.entries(albumToPhotoset._all!).map(([key, photoset]) => (
+          <div className="aspect-square" key={key}>
+            <picture>
+              <source
+                type="image/jpeg"
+                sizes={sourceSizes}
+                srcSet={thumbSizes
+                  .map(({ size, width }) => `${photoset[size]} ${width}w`)
+                  .join(", ")}
+              />
+              <img className="w-full h-full object-cover" />
+            </picture>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+};
 
 export default Index;
