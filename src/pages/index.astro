@@ -55,8 +55,14 @@ urls.forEach((url) => {
 ---
 
 <MainLayout>
+  <div class="fixed bg-white pt-4 pb-1 px-2 block w-full">
+    <div class="float-start">
+      <span class="site-logo inline-block text-5xl">Photolog</span>
+      <span class="inline-block ml-1">by Matt Lewis</span>
+    </div>
+  </div>
   <div
-    class="grid grid-cols-3 s4:grid-cols-4 s5:grid-cols-5 s6:grid-cols-6 s7:grid-cols-7 s8:grid-cols-8 s9:grid-cols-9 s10:grid-cols-10 s11:grid-cols-11 s12:grid-cols-12">
+    class="pt-24 grid grid-cols-3 s4:grid-cols-4 s5:grid-cols-5 s6:grid-cols-6 s7:grid-cols-7 s8:grid-cols-8 s9:grid-cols-9 s10:grid-cols-10 s11:grid-cols-11 s12:grid-cols-12">
     {
       Object.entries(grouped).map(([, urls]) => (
         <div class="aspect-square">
