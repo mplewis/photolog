@@ -75,8 +75,16 @@ const Index = ({ albums }: { albums: Record<string, Album> }) => {
     }
   }
 
-  const [album, setAlbum] = useState<string>("_all");
+  const [current, setCurrent] = useState<{ album: string; photos: Photoset[] }>(
+    { album: "_all", photos: albumToPhotoset._all! }
+  );
   const [selectedPhoto, setSelectedPhoto] = useState<Photoset | null>(null);
+
+  function setAlbum(name: string) {
+    const photos = albumToPhotoset[name];
+    if (!photos) throw new Error(`Album not found: ${name}`);
+    setCurrent({ album: name, photos });
+  }
 
   const Modal = () => (
     <ReactModal
@@ -113,12 +121,12 @@ const Index = ({ albums }: { albums: Record<string, Album> }) => {
               className={classNames(
                 "px-4 text-sky-700 hover:text-sky-500 transition-all",
                 {
-                  "font-bold": album === name,
+                  "font-bold": current.album === name,
                 }
               )}
               key={name}
               onClick={() =>
-                album === name ? setAlbum("_all") : setAlbum(name)
+                current.album === name ? setAlbum("_all") : setAlbum(name)
               }>
               {name}
             </button>
@@ -130,24 +138,25 @@ const Index = ({ albums }: { albums: Record<string, Album> }) => {
 
   const Gallery = () => (
     <div className="pt-24 grid grid-cols-3 s4:grid-cols-4 s5:grid-cols-5 s6:grid-cols-6 s7:grid-cols-7 s8:grid-cols-8 s9:grid-cols-9 s10:grid-cols-10 s11:grid-cols-11 s12:grid-cols-12">
-      {Object.entries(albumToPhotoset[album]!).map(([key, photoset]) => (
-        <div
-          className="aspect-square overflow-hidden cursor-pointer"
-          key={key}
-          onClick={() => setSelectedPhoto(photoset)}>
-          <picture>
-            <source
-              type="image/jpeg"
-              sizes={gridSourceSizes}
-              srcSet={thumbSizes
-                .map(({ size, width }) => `${photoset[size]} ${width}w`)
-                .join(", ")}
-            />
-            {/* FIXME: hovering over an image raises it over the nav bar */}
-            <img className="w-full h-full object-cover hover:scale-110 transition-all duration-300" />
-          </picture>
-        </div>
-      ))}
+      {current &&
+        current.photos.map((photoset, i) => (
+          <div
+            className="aspect-square overflow-hidden cursor-pointer"
+            key={i}
+            onClick={() => setSelectedPhoto(photoset)}>
+            <picture>
+              <source
+                type="image/jpeg"
+                sizes={gridSourceSizes}
+                srcSet={thumbSizes
+                  .map(({ size, width }) => `${photoset[size]} ${width}w`)
+                  .join(", ")}
+              />
+              {/* FIXME: hovering over an image raises it over the nav bar */}
+              <img className="w-full h-full object-cover hover:scale-110 transition-all duration-300" />
+            </picture>
+          </div>
+        ))}
     </div>
   );
 
