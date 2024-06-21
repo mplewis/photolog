@@ -91,7 +91,7 @@ const Index = ({ albums }: { albums: Record<string, Album> }) => {
 
       <div className="pt-24 grid grid-cols-3 s4:grid-cols-4 s5:grid-cols-5 s6:grid-cols-6 s7:grid-cols-7 s8:grid-cols-8 s9:grid-cols-9 s10:grid-cols-10 s11:grid-cols-11 s12:grid-cols-12">
         {Object.entries(albumToPhotoset[album]!).map(([key, photoset]) => (
-          <div className="aspect-square" key={key}>
+          <div className="aspect-square overflow-hidden" key={key}>
             <picture>
               <source
                 type="image/jpeg"
@@ -100,7 +100,7 @@ const Index = ({ albums }: { albums: Record<string, Album> }) => {
                   .map(({ size, width }) => `${photoset[size]} ${width}w`)
                   .join(", ")}
               />
-              <img className="w-full h-full object-cover" />
+              <img className="w-full h-full object-cover hover:scale-110 transition-all duration-300" />
             </picture>
           </div>
         ))}
