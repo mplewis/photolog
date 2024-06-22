@@ -24,7 +24,7 @@ const albumMeta = {
     desc: "Photos from Japan: Tokyo, Kyoto, Hiroshima, and Osaka",
   },
   europe: { name: "Europe", desc: "Photos from France and Iceland" },
-  home: {
+  colorado: {
     name: "Colorado",
     desc: "Photos taken near where I live in Colorado",
   },
@@ -48,15 +48,19 @@ for (const url of urls) {
   const a = albums[album]!;
 
   const metaKey = `${photoset}_${size}${ext}`;
-  const meta = metadata.processed[metaKey];
-  if (!meta) throw new Error(`Metadata not found for ${metaKey}`);
+  const metaProc = metadata.processed[metaKey];
+  if (!metaProc) throw new Error(`Processed metadata not found for ${metaKey}`);
+  const metaOrig = metadata.original[metaProc.original];
+  if (!metaOrig)
+    throw new Error(`Original metadata not found for ${metaProc.original}`);
 
-  if (!a.photosets[photoset])
-    a.photosets[photoset] = { metadata: meta, sizes: {} };
+  if (!a.photosets[photoset]) {
+    a.photosets[photoset] = { metadata: metaOrig, sizes: {} };
+  }
   a.photosets[photoset]!.sizes[size] = {
     url,
-    width: meta.width,
-    height: meta.height,
+    width: metaProc.width,
+    height: metaProc.height,
   };
 }
 ---
