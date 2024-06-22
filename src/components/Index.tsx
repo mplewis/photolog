@@ -1,10 +1,11 @@
-import YARL from "yet-another-react-lightbox";
+import YARL, { type SlideImage } from "yet-another-react-lightbox";
 import Thumbnails from "yet-another-react-lightbox/plugins/thumbnails";
 import { useState } from "react";
 import classNames from "classnames";
 
 import "yet-another-react-lightbox/styles.css";
 import "yet-another-react-lightbox/plugins/thumbnails.css";
+import type { OriginalMetadata } from "../types";
 
 export type Album = {
   /** Human-readable name of the album */
@@ -12,8 +13,11 @@ export type Album = {
   desc: string;
   photosets: Record<string, Photoset>;
 };
-// TODO: Add metadata
-export type Photoset = Record<string, string>; // size -> url
+
+export type Photoset = {
+  metadata: OriginalMetadata;
+  sizes: Record<string, { url: string; width: number; height: number }>;
+};
 
 const screenSizes = [
   { size: "s3", width: 450, columns: 3 },
@@ -28,12 +32,7 @@ const screenSizes = [
   { size: "s12", width: 1800, columns: 12 },
 ] as const;
 
-const gridSourceSizes = screenSizes
-  .map(
-    ({ width, columns }) =>
-      `(max-width: ${width - 1}px) ${(100 / columns).toFixed(2)}vw`
-  )
-  .join(",\n");
+const YARL_THUMBNAIL_SIZE = "w396";
 
 const thumbSizes = [
   { size: "w180", width: 180 },
@@ -53,6 +52,13 @@ const fullSizes = [
   { size: "w1476", width: 1476 },
   { size: "w1800", width: 1800 },
 ] as const;
+
+const gridSourceSizes = screenSizes
+  .map(
+    ({ width, columns }) =>
+      `(max-width: ${width - 1}px) ${(100 / columns).toFixed(2)}vw`
+  )
+  .join(",\n");
 
 const Index = ({ albums }: { albums: Record<string, Album> }) => {
   const albumToPhotoset: Record<string, Photoset[]> = { _all: [] };
@@ -107,10 +113,25 @@ const Index = ({ albums }: { albums: Record<string, Album> }) => {
     </div>
   );
 
-  const Gallery = () => (
-    <div className="pt-24 grid grid-cols-3 s4:grid-cols-4 s5:grid-cols-5 s6:grid-cols-6 s7:grid-cols-7 s8:grid-cols-8 s9:grid-cols-9 s10:grid-cols-10 s11:grid-cols-11 s12:grid-cols-12">
-      {current &&
-        current.photos.map((photoset, i) => (
+  const Gallery = () => {
+    if (!current) return;
+
+    function srcSet(photoset: Photoset) {
+      return thumbSizes
+        .map(({ size }) => {
+          const src = photoset.sizes[size];
+          if (!src)
+            throw new Error(
+              `Missing ${size} size for ${JSON.stringify(photoset)}`
+            );
+          return `${src.url} ${src.width}w`;
+        })
+        .join(", ");
+    }
+
+    return (
+      <div className="pt-24 grid grid-cols-3 s4:grid-cols-4 s5:grid-cols-5 s6:grid-cols-6 s7:grid-cols-7 s8:grid-cols-8 s9:grid-cols-9 s10:grid-cols-10 s11:grid-cols-11 s12:grid-cols-12">
+        {current.photos.map((photoset, i) => (
           <div
             className="aspect-square overflow-hidden cursor-pointer"
             key={i}
@@ -119,40 +140,50 @@ const Index = ({ albums }: { albums: Record<string, Album> }) => {
               <source
                 type="image/jpeg"
                 sizes={gridSourceSizes}
-                srcSet={thumbSizes
-                  .map(({ size, width }) => `${photoset[size]} ${width}w`)
-                  .join(", ")}
+                srcSet={srcSet(photoset)}
               />
-              {/* FIXME: hovering over an image raises it over the nav bar */}
               <img
                 className={classNames(
-                  "w-full h-full object-cover hover:scale-110 transition-all duration-300",
-                  { "scale-110": selected === i }
+                  "w-full h-full object-cover bg-white hover:border-8 transition-all duration-300",
+                  { "border-8": selected === i }
                 )}
               />
             </picture>
           </div>
         ))}
-    </div>
-  );
+      </div>
+    );
+  };
 
-  const Lightbox = () =>
-    current && (
+  const Lightbox = () => {
+    if (!current) return;
+    const slides: SlideImage[] = current.photos.map((photoset) => {
+      if (!photoset.sizes[YARL_THUMBNAIL_SIZE])
+        throw new Error(
+          `Missing ${YARL_THUMBNAIL_SIZE} size for ${JSON.stringify(photoset)}`
+        );
+      return {
+        src: photoset.sizes[YARL_THUMBNAIL_SIZE].url,
+        width: photoset.sizes[YARL_THUMBNAIL_SIZE].width,
+        height: photoset.sizes[YARL_THUMBNAIL_SIZE].height,
+        srcSet: fullSizes.map(({ size }) => {
+          const src = photoset.sizes[size];
+          if (!src)
+            throw new Error(
+              `Missing ${size} size for ${JSON.stringify(photoset)}`
+            );
+          return { src: src.url, width: src.width, height: src.height };
+        }),
+      };
+    });
+
+    return (
       <YARL
         plugins={[Thumbnails]}
         open={selected !== null}
         close={() => setSelected(null)}
         index={selected ?? 0}
-        slides={current.photos.map((photoset) => ({
-          src: photoset.w1800!,
-          width: 1800,
-          height: 0,
-          srcSet: fullSizes.map(({ size, width }) => ({
-            src: photoset[size]!,
-            width,
-            height: 0,
-          })),
-        }))}
+        slides={slides}
         thumbnails={{
           border: 0,
           showToggle: true,
@@ -162,6 +193,7 @@ const Index = ({ albums }: { albums: Record<string, Album> }) => {
         }}
       />
     );
+  };
 
   return (
     <>

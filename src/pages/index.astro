@@ -2,10 +2,20 @@
 import MainLayout from "../layouts/MainLayout.astro";
 import IndexComp from "../components/Index.tsx";
 import type { Album } from "../components/Index.tsx";
+import { metadataPackageSchema } from "../types";
+import _metadata from "../../public/photos/metadata.json";
 
 import { glob } from "glob";
 
-const pathRe = /^photos\/((.+)\/.+)_([^.]+).[A-Za-z]+$/;
+// TODO: Consider replacing the photoset logic with the `originals` metadata field
+const pathRe = /^photos\/((.+)\/.+)_([^.]+)(.[A-Za-z]+)$/;
+
+const parse = metadataPackageSchema.safeParse(_metadata);
+if (!parse.success) {
+  console.error(parse.error);
+  throw new Error(`Could not parse metadata: ${parse.error.message}`);
+}
+const metadata = parse.data;
 
 const albumMeta = {
   bwca: { name: "Boundary Waters", desc: "Boundary Waters Canoe Area" },
@@ -26,7 +36,7 @@ const albums: Record<string, Album> = {};
 for (const url of urls) {
   const match = url.match(pathRe);
   if (!match) throw new Error(`Could not parse path into album: ${url}`);
-  const [, photoset, album, size] = match;
+  const [, photoset, album, size, ext] = match;
   if (!photoset || !album || !size)
     throw new Error(`Path parsing regex is malformed`);
 
@@ -36,8 +46,18 @@ for (const url of urls) {
     albums[album] = { name: meta.name, desc: meta.desc, photosets: {} };
   }
   const a = albums[album]!;
-  if (!a.photosets[photoset]) a.photosets[photoset] = {};
-  a.photosets[photoset]![size] = url;
+
+  const metaKey = `${photoset}_${size}${ext}`;
+  const meta = metadata.processed[metaKey];
+  if (!meta) throw new Error(`Metadata not found for ${metaKey}`);
+
+  if (!a.photosets[photoset])
+    a.photosets[photoset] = { metadata: meta, sizes: {} };
+  a.photosets[photoset]!.sizes[size] = {
+    url,
+    width: meta.width,
+    height: meta.height,
+  };
 }
 ---
 
