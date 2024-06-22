@@ -22,6 +22,13 @@ export type Photoset = {
   sizes: Record<string, { url: string; width: number; height: number }>;
 };
 
+type PhotosetWithOriginalIndex = Photoset & { index: number };
+
+type DateGrouping = {
+  dateGroup: string; // "May 2024", "June 2022", etc.
+  photosets: PhotosetWithOriginalIndex[];
+};
+
 const screenSizes = [
   { size: "s3", width: 450, columns: 3 },
   { size: "s4", width: 600, columns: 4 },
@@ -62,6 +69,17 @@ const gridSourceSizes = screenSizes
       `(max-width: ${width - 1}px) ${(100 / columns).toFixed(2)}vw`
   )
   .join(",\n");
+
+function srcSet(photoset: Photoset) {
+  return thumbSizes
+    .map(({ size }) => {
+      const src = photoset.sizes[size];
+      if (!src)
+        throw new Error(`Missing ${size} size for ${JSON.stringify(photoset)}`);
+      return `${src.url} ${src.width}w`;
+    })
+    .join(", ");
+}
 
 function trimSp(s: string): string {
   return s.replace(/\s+/g, " ").trim();
@@ -105,7 +123,7 @@ function prettyMeta(m: OriginalMetadata): {
 
   const description = [
     // photoset.sizes[YARL_THUMBNAIL_SIZE].url,
-    m.description,
+    m.description + "\n",
     dayjs(m.date).format("dddd, MMMM D, YYYY"),
     details,
   ]
@@ -181,39 +199,48 @@ const Index = ({ albums }: { albums: Record<string, Album> }) => {
   const Gallery = () => {
     if (!current) return;
 
-    function srcSet(photoset: Photoset) {
-      return thumbSizes
-        .map(({ size }) => {
-          const src = photoset.sizes[size];
-          if (!src)
-            throw new Error(
-              `Missing ${size} size for ${JSON.stringify(photoset)}`
-            );
-          return `${src.url} ${src.width}w`;
-        })
-        .join(", ");
-    }
+    current.photos.sort((a, b) => {
+      if (!a.metadata.date) return -1;
+      if (!b.metadata.date) return 1;
+      return b.metadata.date.getTime() - a.metadata.date.getTime();
+    });
+
+    const dateGroups: DateGrouping[] = [];
+    let currentGroup: DateGrouping | null = null;
+    current.photos.forEach((photoset, index) => {
+      const dateGroup = dayjs(photoset.metadata.date).format("MMMM YYYY");
+      if (!currentGroup || currentGroup.dateGroup !== dateGroup) {
+        currentGroup = { dateGroup, photosets: [] };
+        dateGroups.push(currentGroup);
+      }
+      currentGroup.photosets.push({ ...photoset, index });
+    });
 
     return (
-      <div className="pt-24 grid grid-cols-3 s4:grid-cols-4 s5:grid-cols-5 s6:grid-cols-6 s7:grid-cols-7 s8:grid-cols-8 s9:grid-cols-9 s10:grid-cols-10 s11:grid-cols-11 s12:grid-cols-12">
-        {current.photos.map((photoset, i) => (
-          <div
-            className="aspect-square overflow-hidden cursor-pointer"
-            key={i}
-            onClick={() => setSelected(i)}>
-            <picture>
-              <source
-                type="image/jpeg"
-                sizes={gridSourceSizes}
-                srcSet={srcSet(photoset)}
-              />
-              <img
-                className={classNames(
-                  "w-full h-full object-cover bg-white hover:border-8 transition-all duration-300",
-                  { "border-8": selected === i }
-                )}
-              />
-            </picture>
+      <div className="pt-[6rem]">
+        {dateGroups.map(({ dateGroup, photosets }) => (
+          <div key={dateGroup}>
+            <h1 className="text-2xl pl-2 pt-4 pb-1 font-semibold">
+              {dateGroup}
+            </h1>
+            <div className="grid grid-cols-3 s4:grid-cols-4 s5:grid-cols-5 s6:grid-cols-6 s7:grid-cols-7 s8:grid-cols-8 s9:grid-cols-9 s10:grid-cols-10 s11:grid-cols-11 s12:grid-cols-12">
+              {photosets.map((photoset) => (
+                <div
+                  className="aspect-square overflow-hidden cursor-pointer"
+                  key={photoset.index}
+                  onClick={() => setSelected(photoset.index)}>
+                  <picture>
+                    <source sizes={gridSourceSizes} srcSet={srcSet(photoset)} />
+                    <img
+                      className={classNames(
+                        "w-full h-full object-cover bg-white hover:border-8 transition-all duration-300",
+                        { "border-8": selected === photoset.index }
+                      )}
+                    />
+                  </picture>
+                </div>
+              ))}
+            </div>
           </div>
         ))}
       </div>
