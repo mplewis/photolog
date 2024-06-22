@@ -1,6 +1,11 @@
+import YARL from "yet-another-react-lightbox";
+import Thumbnails from "yet-another-react-lightbox/plugins/thumbnails";
 import { useState } from "react";
 import classNames from "classnames";
 import ReactModal from "react-modal";
+
+import "yet-another-react-lightbox/styles.css";
+import "yet-another-react-lightbox/plugins/thumbnails.css";
 
 export type Album = {
   /** Human-readable name of the album */
@@ -79,8 +84,6 @@ const Index = ({ albums }: { albums: Record<string, Album> }) => {
     { album: "_all", photos: albumToPhotoset._all! }
   );
   const [selected, setSelected] = useState<number | null>(null);
-  const selectedPhoto =
-    selected !== null ? current.photos[selected] ?? null : null;
 
   function setAlbum(name: string) {
     const photos = albumToPhotoset[name];
@@ -88,50 +91,26 @@ const Index = ({ albums }: { albums: Record<string, Album> }) => {
     setCurrent({ album: name, photos });
   }
 
-  const Modal = () => (
-    <ReactModal
-      isOpen={Boolean(selectedPhoto)}
-      onRequestClose={() => setSelected(null)}
-      style={modalStyle}>
-      {selectedPhoto && (
-        <div className="flex flex-col w-full h-full">
-          <picture className="flex-grow pb-8" style={{ maxHeight: "90%" }}>
-            <source
-              type="image/jpeg"
-              srcSet={fullSizes
-                .map(({ size, width }) => `${selectedPhoto![size]} ${width}w`)
-                .join(", ")}
-            />
-            <img
-              className="w-full h-full object-scale-down cursor-pointer"
-              onClick={() => setSelected(null)}
-            />
-          </picture>
-
-          <div className="bg-green-500 flex" style={{ maxHeight: "10%" }}>
-            {current &&
-              current.photos.map((photoset, i) => (
-                <div
-                  className="aspect-square overflow-hidden cursor-pointer shrink-0"
-                  key={i}
-                  onClick={() => setSelected(i)}>
-                  <picture>
-                    <source
-                      type="image/jpeg"
-                      sizes={gridSourceSizes}
-                      srcSet={thumbSizes
-                        .map(({ size, width }) => `${photoset[size]} ${width}w`)
-                        .join(", ")}
-                    />
-                    <img className="w-full h-full object-cover hover:scale-110 transition-all duration-300" />
-                  </picture>
-                </div>
-              ))}
-          </div>
-        </div>
-      )}
-    </ReactModal>
-  );
+  const Lightbox = () =>
+    current && (
+      <YARL
+        plugins={[Thumbnails]}
+        open={selected !== null}
+        close={() => setSelected(null)}
+        index={selected ?? 0}
+        slides={current.photos.map((photoset) => ({
+          src: photoset.w1800!,
+          width: 1800,
+          height: 0,
+          srcSet: fullSizes.map(({ size, width }) => ({
+            src: photoset[size]!,
+            width,
+            height: 0,
+          })),
+        }))}
+        thumbnails={{}}
+      />
+    );
 
   const Nav = () => (
     <div className="fixed bg-white pt-4 pb-1 px-2 block w-full">
@@ -187,7 +166,7 @@ const Index = ({ albums }: { albums: Record<string, Album> }) => {
 
   return (
     <>
-      <Modal />
+      <Lightbox />
       <Nav />
       <Gallery />
     </>
