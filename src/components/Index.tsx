@@ -2,7 +2,6 @@ import YARL from "yet-another-react-lightbox";
 import Thumbnails from "yet-another-react-lightbox/plugins/thumbnails";
 import { useState } from "react";
 import classNames from "classnames";
-import ReactModal from "react-modal";
 
 import "yet-another-react-lightbox/styles.css";
 import "yet-another-react-lightbox/plugins/thumbnails.css";
@@ -55,21 +54,6 @@ const fullSizes = [
   { size: "w1800", width: 1800 },
 ] as const;
 
-ReactModal.setAppElement("#app");
-
-const modalStyle = {
-  content: {
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    padding: 0,
-    backgroundColor: "black",
-    border: "none",
-    borderRadius: 0,
-  },
-};
-
 const Index = ({ albums }: { albums: Record<string, Album> }) => {
   const albumToPhotoset: Record<string, Photoset[]> = { _all: [] };
   for (const { name, photosets: photos } of Object.values(albums)) {
@@ -91,44 +75,27 @@ const Index = ({ albums }: { albums: Record<string, Album> }) => {
     setCurrent({ album: name, photos });
   }
 
-  const Lightbox = () =>
-    current && (
-      <YARL
-        plugins={[Thumbnails]}
-        open={selected !== null}
-        close={() => setSelected(null)}
-        index={selected ?? 0}
-        slides={current.photos.map((photoset) => ({
-          src: photoset.w1800!,
-          width: 1800,
-          height: 0,
-          srcSet: fullSizes.map(({ size, width }) => ({
-            src: photoset[size]!,
-            width,
-            height: 0,
-          })),
-        }))}
-        thumbnails={{}}
-      />
-    );
-
   const Nav = () => (
     <div className="fixed bg-white pt-4 pb-1 px-2 block w-full">
       <div className="flex items-end justify-between">
         <div>
-          <span className="site-logo inline-block text-5xl">Photolog</span>
+          <span className="site-logo inline-block text-5xl">
+            <button
+              className="hover:text-sky-700 transition-all"
+              onClick={() => setAlbum("_all")}>
+              Photolog
+            </button>
+          </span>
           <span className="inline-block ml-1">by Matt Lewis</span>
         </div>
         <div>
-          {Object.entries(albums).map(([, { name }]) => (
+          {Object.entries(albums).map(([, { name }], i) => (
             <button
+              key={i}
               className={classNames(
                 "px-4 text-sky-700 hover:text-sky-500 transition-all",
-                {
-                  "font-bold": current.album === name,
-                }
+                { underline: current.album === name }
               )}
-              key={name}
               onClick={() =>
                 current.album === name ? setAlbum("_all") : setAlbum(name)
               }>
@@ -157,18 +124,50 @@ const Index = ({ albums }: { albums: Record<string, Album> }) => {
                   .join(", ")}
               />
               {/* FIXME: hovering over an image raises it over the nav bar */}
-              <img className="w-full h-full object-cover hover:scale-110 transition-all duration-300" />
+              <img
+                className={classNames(
+                  "w-full h-full object-cover hover:scale-110 transition-all duration-300",
+                  { "scale-110": selected === i }
+                )}
+              />
             </picture>
           </div>
         ))}
     </div>
   );
 
+  const Lightbox = () =>
+    current && (
+      <YARL
+        plugins={[Thumbnails]}
+        open={selected !== null}
+        close={() => setSelected(null)}
+        index={selected ?? 0}
+        slides={current.photos.map((photoset) => ({
+          src: photoset.w1800!,
+          width: 1800,
+          height: 0,
+          srcSet: fullSizes.map(({ size, width }) => ({
+            src: photoset[size]!,
+            width,
+            height: 0,
+          })),
+        }))}
+        thumbnails={{
+          border: 0,
+          showToggle: true,
+          gap: 8,
+          padding: 0,
+          imageFit: "cover",
+        }}
+      />
+    );
+
   return (
     <>
-      <Lightbox />
       <Nav />
       <Gallery />
+      <Lightbox />
     </>
   );
 };
