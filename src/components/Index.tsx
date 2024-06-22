@@ -3,7 +3,6 @@ import Captions from "yet-another-react-lightbox/plugins/captions";
 import Thumbnails from "yet-another-react-lightbox/plugins/thumbnails";
 import { useState } from "react";
 import classNames from "classnames";
-import { stripIndents } from "common-tags";
 import dayjs from "dayjs";
 
 import "yet-another-react-lightbox/styles.css";
@@ -75,6 +74,46 @@ function trimCommonPrefixWords(base: string, toTrim: string): string {
     if (baseWords[i] !== toTrimWords[i]) return toTrimWords.slice(i).join(" ");
   }
   return toTrimWords.slice(baseWords.length).join(" ");
+}
+
+function prettyMeta(m: OriginalMetadata): {
+  title: string;
+  description: string;
+} {
+  const t: string[] = [];
+  if (m.title) t.push(m.title);
+  if (m.location) t.push(m.location);
+  const title = t.join(", ");
+
+  const camera = trimSp(`${m.cameraMake || ""} ${m.cameraModel || ""}`);
+  let lens = trimSp(`${m.lensMake || ""} ${m.lensModel || ""}`);
+  lens = trimCommonPrefixWords(camera, lens);
+
+  const s: string[] = [];
+  if (m.exposureTime) s.push(`${m.exposureTime}s`);
+  if (m.fNumber) s.push(`f/${m.fNumber}`);
+  if (m.iso) s.push(`ISO ${m.iso}`);
+  const settings = s.join(", ");
+
+  const d: string[] = [];
+  if (camera) d.push(camera);
+  if (lens) d.push(lens);
+  if (settings) d.push(settings);
+  const details = d.join(", ");
+
+  if (!m.date) throw new Error(`Missing date for ${JSON.stringify(m)}`);
+
+  const description = [
+    // photoset.sizes[YARL_THUMBNAIL_SIZE].url,
+    m.description,
+    dayjs(m.date).format("dddd, MMMM D, YYYY"),
+    details,
+  ]
+    .filter(Boolean)
+    .join("\n")
+    .trim();
+
+  return { title, description };
 }
 
 const Index = ({ albums }: { albums: Record<string, Album> }) => {
@@ -190,38 +229,7 @@ const Index = ({ albums }: { albums: Record<string, Album> }) => {
           `Missing ${YARL_THUMBNAIL_SIZE} size for ${JSON.stringify(photoset)}`
         );
 
-      const m = photoset.metadata;
-
-      const t: string[] = [];
-      if (m.title) t.push(m.title);
-      if (m.location) t.push(m.location);
-      const title = t.join(", ");
-
-      const camera = trimSp(`${m.cameraMake || ""} ${m.cameraModel || ""}`);
-      let lens = trimSp(`${m.lensMake || ""} ${m.lensModel || ""}`);
-      lens = trimCommonPrefixWords(camera, lens);
-
-      const s: string[] = [];
-      if (m.exposureTime) s.push(`${m.exposureTime}s`);
-      if (m.fNumber) s.push(`f/${m.fNumber}`);
-      if (m.iso) s.push(`ISO ${m.iso}`);
-      const settings = s.join(", ");
-
-      const d: string[] = [];
-      if (camera) d.push(camera);
-      if (lens) d.push(lens);
-      if (settings) d.push(settings);
-      const details = d.join(", ");
-
-      const description = [
-        // photoset.sizes[YARL_THUMBNAIL_SIZE].url,
-        m.description,
-        dayjs(m.date).format("dddd, MMMM D, YYYY"),
-        details,
-      ]
-        .filter(Boolean)
-        .join("\n")
-        .trim();
+      const { title, description } = prettyMeta(photoset.metadata);
 
       const srcSet = fullSizes.map(({ size }) => {
         const src = photoset.sizes[size];
