@@ -61,14 +61,16 @@ const Gallery = ({
   return (
     <div className="pt-[6rem]">
       {selectedAlbum && (
-        <h1 className="text-lg pl-2">
+        <h1 className="text-lg px-2 pt-[1rem]">
           Album:{" "}
           <span className="font-semibold">
-            {albumMeta[selectedAlbum as AlbumKey].name}:
-          </span>{" "}
-          {albumMeta[selectedAlbum as AlbumKey].desc}
+            {albumMeta[selectedAlbum as AlbumKey].name}
+          </span>
+          <br />
+          <em>{albumMeta[selectedAlbum as AlbumKey].desc}</em>
         </h1>
       )}
+
       {dateGroups.map(({ dateGroup, photosets }) => (
         <div key={dateGroup}>
           <h1 className="text-2xl pl-2 pt-4 pb-1 font-semibold">{dateGroup}</h1>
