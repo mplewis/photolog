@@ -3,6 +3,7 @@ import dayjs from "dayjs";
 
 import type { Photoset } from "../types";
 import { screenSizes, thumbSizes } from "../sizes";
+import type { AlbumKey } from "../meta";
 
 type PhotosetWithOriginalIndex = Photoset & { index: number };
 
@@ -30,10 +31,12 @@ function srcSet(photoset: Photoset) {
 }
 
 const Gallery = ({
+  selectedAlbum,
   photos,
   selectedPhoto,
   setSelectedPhoto,
 }: {
+  selectedAlbum: AlbumKey | null;
   photos: Photoset[];
   selectedPhoto: number | null;
   setSelectedPhoto: (index: number) => void;

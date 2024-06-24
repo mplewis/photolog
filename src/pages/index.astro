@@ -1,11 +1,12 @@
 ---
+import { glob } from "glob";
 import MainLayout from "../layouts/MainLayout.astro";
 import App from "../components/App.tsx";
 import type { Album } from "../types";
 import { metadataPackageSchema } from "../types";
+import { albumMeta } from "../meta";
+import type { AlbumKey } from "../meta";
 import _metadata from "../../public/photos/metadata.json";
-
-import { glob } from "glob";
 
 // TODO: Consider replacing the photoset logic with the `originals` metadata field
 const pathRe = /^photos\/((.+)\/.+)_([^.]+)(.[A-Za-z]+)$/;
@@ -16,19 +17,6 @@ if (!parse.success) {
   throw new Error(`Could not parse metadata: ${parse.error.message}`);
 }
 const metadata = parse.data;
-
-const albumMeta = {
-  bwca: { name: "Boundary Waters", desc: "Boundary Waters Canoe Area" },
-  japan: {
-    name: "Japan",
-    desc: "Photos from Japan: Tokyo, Kyoto, Hiroshima, and Osaka",
-  },
-  europe: { name: "Europe", desc: "Photos from France and Iceland" },
-  colorado: {
-    name: "Colorado",
-    desc: "Photos taken near where I live in Colorado",
-  },
-} as const;
 
 const urls = await glob("photos/**/*.jpg", { cwd: "public" });
 const albums: Record<string, Album> = {};
@@ -41,7 +29,7 @@ for (const url of urls) {
     throw new Error(`Path parsing regex is malformed`);
 
   if (!albums[album]) {
-    const meta = albumMeta[album as keyof typeof albumMeta];
+    const meta = albumMeta[album as AlbumKey];
     if (!albumMeta) throw new Error(`Album metadata not found for ${album}`);
     albums[album] = { name: meta.name, desc: meta.desc, photosets: {} };
   }

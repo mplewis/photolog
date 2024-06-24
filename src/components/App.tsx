@@ -5,13 +5,14 @@ import type { Album, Photoset } from "../types";
 import Nav from "./Nav";
 import Gallery from "./Gallery";
 import Lightbox from "./Lightbox";
+import type { AlbumKey } from "../meta";
 
-const App = ({ albums }: { albums: Record<string, Album> }) => {
+const App = ({ albums }: { albums: Record<AlbumKey, Album> }) => {
   const albumToPhotoset: Record<string, Photoset[]> = { _all: [] };
-  for (const { name, photosets } of Object.values(albums)) {
-    albumToPhotoset[name] = [];
+  for (const [key, { photosets }] of Object.entries(albums)) {
+    albumToPhotoset[key] = [];
     for (const [, photoset] of Object.entries(photosets)) {
-      albumToPhotoset[name]!.push(photoset);
+      albumToPhotoset[key]!.push(photoset);
       albumToPhotoset._all!.push(photoset);
     }
   }
@@ -25,33 +26,36 @@ const App = ({ albums }: { albums: Record<string, Album> }) => {
     });
   }
 
-  const [current, setCurrent] = useState<{ album: string; photos: Photoset[] }>(
-    { album: "_all", photos: albumToPhotoset._all! }
-  );
-  const [selected, setSelected] = useState<number | null>(null);
+  const [current, setCurrent] = useState<{
+    album: AlbumKey | null;
+    photos: Photoset[];
+  }>({ album: null, photos: albumToPhotoset._all! });
+  const [selectedPhoto, setSelectedPhoto] = useState<number | null>(null);
 
-  function setCurrentAlbum(name: string) {
-    const photos = albumToPhotoset[name];
-    if (!photos) throw new Error(`Album not found: ${name}`);
-    setCurrent({ album: name, photos });
+  function setSelectedAlbum(key: AlbumKey | null) {
+    const k = key ?? "_all";
+    const photos = albumToPhotoset[k];
+    if (!photos) throw new Error(`Album not found: ${k}`);
+    setCurrent({ album: key, photos });
   }
 
   return (
     <>
       <Nav
         albums={albums}
-        currentAlbum={current.album}
-        setCurrentAlbum={setCurrentAlbum}
+        selectedAlbum={current.album}
+        setSelectedAlbum={setSelectedAlbum}
       />
       <Gallery
+        selectedAlbum={current.album}
         photos={current.photos}
-        selectedPhoto={selected}
-        setSelectedPhoto={setSelected}
+        selectedPhoto={selectedPhoto}
+        setSelectedPhoto={setSelectedPhoto}
       />
       <Lightbox
         photos={current.photos}
-        selectedPhoto={selected}
-        setSelectedPhoto={setSelected}
+        selectedPhoto={selectedPhoto}
+        setSelectedPhoto={setSelectedPhoto}
       />
     </>
   );
