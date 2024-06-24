@@ -3,7 +3,7 @@ import dayjs from "dayjs";
 
 import type { Photoset } from "../types";
 import { screenSizes, thumbSizes } from "../sizes";
-import type { AlbumKey } from "../meta";
+import { albumMeta, type AlbumKey } from "../meta";
 
 type PhotosetWithOriginalIndex = Photoset & { index: number };
 
@@ -60,6 +60,15 @@ const Gallery = ({
 
   return (
     <div className="pt-[6rem]">
+      {selectedAlbum && (
+        <h1 className="text-lg pl-2">
+          Album:{" "}
+          <span className="font-semibold">
+            {albumMeta[selectedAlbum as AlbumKey].name}:
+          </span>{" "}
+          {albumMeta[selectedAlbum as AlbumKey].desc}
+        </h1>
+      )}
       {dateGroups.map(({ dateGroup, photosets }) => (
         <div key={dateGroup}>
           <h1 className="text-2xl pl-2 pt-4 pb-1 font-semibold">{dateGroup}</h1>

@@ -7,7 +7,7 @@ export const albumMeta = {
   },
   japan: {
     name: "Japan",
-    desc: "Tokyo, Kyoto, Hiroshima, and Osaka",
+    desc: "My trip to Tokyo, Kyoto, Hiroshima, and Osaka",
   },
   europe: { name: "Europe", desc: "France and Iceland" },
   colorado: {
