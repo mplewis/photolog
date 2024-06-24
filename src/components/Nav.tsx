@@ -58,9 +58,11 @@ const Nav = ({
         {/* Mobile menu */}
         <div className="block s5:hidden">
           <button
-            className="text-2xl p-4 aspect-square text-sky-700 hover:text-sky-500 transition-all"
+            className={classNames(
+              "text-2xl p-4 aspect-square text-sky-700 hover:text-sky-500 transition-all"
+            )}
             onClick={() => setShowMenu(!showMenu)}>
-            ▼
+            {showMenu ? "▲" : "▼"}
           </button>
         </div>
       </div>
