@@ -1,6 +1,6 @@
 ---
 import MainLayout from "../layouts/MainLayout.astro";
-import IndexComp from "../components/Index.tsx";
+import App from "../components/App.tsx";
 import type { Album } from "../types";
 import { metadataPackageSchema } from "../types";
 import _metadata from "../../public/photos/metadata.json";
@@ -66,5 +66,5 @@ for (const url of urls) {
 ---
 
 <MainLayout>
-  <IndexComp client:only albums={albums} />
+  <App client:only albums={albums} />
 </MainLayout>

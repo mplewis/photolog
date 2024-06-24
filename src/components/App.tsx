@@ -67,7 +67,7 @@ function prettyMeta(m: OriginalMetadata): {
   return { title, description };
 }
 
-const Index = ({ albums }: { albums: Record<string, Album> }) => {
+const App = ({ albums }: { albums: Record<string, Album> }) => {
   const albumToPhotoset: Record<string, Photoset[]> = { _all: [] };
   for (const { name, photosets } of Object.values(albums)) {
     albumToPhotoset[name] = [];
@@ -168,4 +168,4 @@ const Index = ({ albums }: { albums: Record<string, Album> }) => {
   );
 };
 
-export default Index;
+export default App;
