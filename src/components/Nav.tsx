@@ -69,25 +69,23 @@ const Nav = ({
 
       <div className={classNames("pt-4", { hidden: !showMenu })}>
         {Object.entries(albums).map(([key, { name }], i) => (
-          <div>
-            <button
-              key={i}
-              className={classNames(
-                "pl-1 py-3 text-lg text-sky-700 hover:text-sky-500 transition-all",
-                {
-                  underline: selectedAlbum === key,
-                  "font-bold": selectedAlbum === key,
-                }
-              )}
-              onClick={() => {
-                selectedAlbum === key
-                  ? setSelectedAlbum(null)
-                  : setSelectedAlbum(key as AlbumKey);
-                setShowMenu(false);
-              }}>
-              {name}
-            </button>
-          </div>
+          <button
+            key={i}
+            className={classNames(
+              "block w-full pl-1 py-3 text-lg text-sky-700 hover:text-sky-500 transition-all text-left",
+              {
+                underline: selectedAlbum === key,
+                "font-bold": selectedAlbum === key,
+              }
+            )}
+            onClick={() => {
+              selectedAlbum === key
+                ? setSelectedAlbum(null)
+                : setSelectedAlbum(key as AlbumKey);
+              setShowMenu(false);
+            }}>
+            {name}
+          </button>
         ))}
       </div>
     </div>
