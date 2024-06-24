@@ -123,7 +123,7 @@ function prettyMeta(m: OriginalMetadata): {
 
   const description = [
     // photoset.sizes[YARL_THUMBNAIL_SIZE].url,
-    m.description + "\n",
+    m.description && m.description + "\n",
     dayjs(m.date).format("dddd, MMMM D, YYYY"),
     details,
   ]
