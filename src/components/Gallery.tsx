@@ -70,7 +70,7 @@ const Gallery = ({
                   <source sizes={gridSourceSizes} srcSet={srcSet(photoset)} />
                   <img
                     className={classNames(
-                      "w-full h-full object-cover bg-white hover:border-8 transition-all duration-300",
+                      "w-full h-full object-cover hover:border-8 border-white transition-all duration-300",
                       { "border-8": selectedPhoto === photoset.index }
                     )}
                   />
