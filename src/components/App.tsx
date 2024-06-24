@@ -41,11 +41,7 @@ const App = ({ albums }: { albums: Record<AlbumKey, Album> }) => {
 
   return (
     <>
-      <Nav
-        albums={albums}
-        selectedAlbum={current.album}
-        setSelectedAlbum={setSelectedAlbum}
-      />
+      <Nav selectedAlbum={current.album} setSelectedAlbum={setSelectedAlbum} />
       <Gallery
         selectedAlbum={current.album}
         photos={current.photos}

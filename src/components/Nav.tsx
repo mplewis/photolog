@@ -1,14 +1,11 @@
 import classNames from "classnames";
-import type { Album } from "../types";
 import { albumMeta, type AlbumKey } from "../meta";
 import { useState } from "react";
 
 const Nav = ({
-  albums,
   selectedAlbum,
   setSelectedAlbum,
 }: {
-  albums: Record<AlbumKey, Album>;
   selectedAlbum: AlbumKey | null;
   setSelectedAlbum: (a: AlbumKey | null) => void;
 }) => {
