@@ -8,19 +8,8 @@ import dayjs from "dayjs";
 import "yet-another-react-lightbox/styles.css";
 import "yet-another-react-lightbox/plugins/captions.css";
 import "yet-another-react-lightbox/plugins/thumbnails.css";
-import type { OriginalMetadata } from "../types";
-
-export type Album = {
-  /** Human-readable name of the album */
-  name: string;
-  desc: string;
-  photosets: Record<string, Photoset>;
-};
-
-export type Photoset = {
-  metadata: OriginalMetadata;
-  sizes: Record<string, { url: string; width: number; height: number }>;
-};
+import type { Album, OriginalMetadata, Photoset } from "../types";
+import Nav from "./Nav";
 
 type PhotosetWithOriginalIndex = Photoset & { index: number };
 
@@ -158,43 +147,11 @@ const Index = ({ albums }: { albums: Record<string, Album> }) => {
   );
   const [selected, setSelected] = useState<number | null>(null);
 
-  function setAlbum(name: string) {
+  function setCurrentAlbum(name: string) {
     const photos = albumToPhotoset[name];
     if (!photos) throw new Error(`Album not found: ${name}`);
     setCurrent({ album: name, photos });
   }
-
-  const Nav = () => (
-    <div className="fixed bg-white pt-4 pb-1 px-2 block w-full">
-      <div className="flex items-end justify-between">
-        <div>
-          <span className="site-logo inline-block text-5xl">
-            <button
-              className="hover:text-sky-700 transition-all"
-              onClick={() => setAlbum("_all")}>
-              Photolog
-            </button>
-          </span>
-          <span className="inline-block ml-1">by Matt Lewis</span>
-        </div>
-        <div>
-          {Object.entries(albums).map(([, { name }], i) => (
-            <button
-              key={i}
-              className={classNames(
-                "px-4 text-sky-700 hover:text-sky-500 transition-all",
-                { underline: current.album === name }
-              )}
-              onClick={() =>
-                current.album === name ? setAlbum("_all") : setAlbum(name)
-              }>
-              {name}
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
 
   const Gallery = () => {
     if (!current) return;
@@ -303,7 +260,11 @@ const Index = ({ albums }: { albums: Record<string, Album> }) => {
 
   return (
     <>
-      <Nav />
+      <Nav
+        albums={albums}
+        currentAlbum={current.album}
+        setCurrentAlbum={setCurrentAlbum}
+      />
       <Gallery />
       <Lightbox />
     </>
