@@ -290,6 +290,7 @@ const Index = ({ albums }: { albums: Record<string, Album> }) => {
           descriptionTextAlign: "center",
         }}
         thumbnails={{
+          hidden: document.documentElement.clientHeight < 800,
           border: 0,
           showToggle: true,
           gap: 8,
