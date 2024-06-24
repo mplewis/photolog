@@ -4,7 +4,7 @@ import MainLayout from "../layouts/MainLayout.astro";
 import App from "../components/App.tsx";
 import type { Album } from "../types";
 import { metadataPackageSchema } from "../types";
-import { albumMeta } from "../meta";
+import { albumMetaByKey } from "../meta";
 import type { AlbumKey } from "../meta";
 import _metadata from "../../public/photos/metadata.json";
 
@@ -29,8 +29,8 @@ for (const url of urls) {
     throw new Error(`Path parsing regex is malformed`);
 
   if (!albums[album]) {
-    const meta = albumMeta[album as AlbumKey];
-    if (!albumMeta) throw new Error(`Album metadata not found for ${album}`);
+    const meta = albumMetaByKey[album as AlbumKey];
+    if (!meta) throw new Error(`Album metadata not found for ${album}`);
     albums[album] = { name: meta.name, desc: meta.desc, photosets: {} };
   }
   const a = albums[album]!;

@@ -3,7 +3,7 @@ import dayjs from "dayjs";
 
 import type { Photoset } from "../types";
 import { screenSizes, thumbSizes } from "../sizes";
-import { albumMeta, type AlbumKey } from "../meta";
+import { albumMetaByKey, type AlbumKey } from "../meta";
 
 type PhotosetWithOriginalIndex = Photoset & { index: number };
 
@@ -61,13 +61,13 @@ const Gallery = ({
   return (
     <div className="pt-[6rem]">
       {selectedAlbum && (
-        <h1 className="text-lg px-2 pt-[1rem]">
+        <h1 className="text-lg px-2">
           Album:{" "}
           <span className="font-semibold">
-            {albumMeta[selectedAlbum as AlbumKey].name}
+            {albumMetaByKey[selectedAlbum].name}
           </span>
           <br />
-          <em>{albumMeta[selectedAlbum as AlbumKey].desc}</em>
+          <em>{albumMetaByKey[selectedAlbum].desc}</em>
         </h1>
       )}
 

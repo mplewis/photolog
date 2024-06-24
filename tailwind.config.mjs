@@ -6,6 +6,7 @@ export default {
     screens: {
       s3: "450px",
       s4: "600px",
+      desktop: "750px",
       s5: "750px",
       s6: "900px",
       s7: "1050px",

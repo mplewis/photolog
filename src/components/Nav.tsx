@@ -1,6 +1,6 @@
 import classNames from "classnames";
 import type { Album } from "../types";
-import type { AlbumKey } from "../meta";
+import { albumMeta, type AlbumKey } from "../meta";
 import { useState } from "react";
 
 const Nav = ({
@@ -34,8 +34,8 @@ const Nav = ({
         </div>
 
         {/* Desktop menu */}
-        <div className="hidden s5:block">
-          {Object.entries(albums).map(([key, { name }], i) => (
+        <div className="hidden desktop:block">
+          {albumMeta.map(({ key, name }, i) => (
             <button
               key={i}
               className={classNames(
@@ -56,7 +56,7 @@ const Nav = ({
         </div>
 
         {/* Mobile menu */}
-        <div className="block s5:hidden">
+        <div className="block desktop:hidden">
           <button
             className={classNames(
               "text-2xl p-4 aspect-square text-sky-700 hover:text-sky-500 transition-all"
@@ -68,7 +68,7 @@ const Nav = ({
       </div>
 
       <div className={classNames("pt-4", { hidden: !showMenu })}>
-        {Object.entries(albums).map(([key, { name }], i) => (
+        {albumMeta.map(({ key, name }, i) => (
           <button
             key={i}
             className={classNames(
