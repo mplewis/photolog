@@ -31,7 +31,7 @@ function trimCommonPrefixWords(base: string, toTrim: string): string {
 }
 
 function prettyMeta(
-  { album, index }: { album: AlbumKey; index: number | null },
+  { album, index }: { album: AlbumKey | null; index: number | null },
   m: OriginalMetadata
 ): {
   title: string;
@@ -125,7 +125,7 @@ const Lightbox = ({
   selectedPhoto,
   setSelectedPhoto,
 }: {
-  selectedAlbum: AlbumKey;
+  selectedAlbum: AlbumKey | null;
   photos: Photoset[];
   selectedPhoto: number | null;
   setSelectedPhoto: (index: number | null) => void;
