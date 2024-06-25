@@ -104,6 +104,9 @@ const Lightbox = ({
       close={() => setSelectedPhoto(null)}
       index={selectedPhoto ?? 0}
       slides={slides}
+      carousel={{
+        padding: 0,
+      }}
       captions={{
         showToggle: true,
         descriptionMaxLines: 8,
