@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import type { Album, Photoset } from "../types";
 
@@ -38,6 +38,16 @@ const App = ({ albums }: { albums: Record<AlbumKey, Album> }) => {
     if (!photos) throw new Error(`Album not found: ${k}`);
     setCurrent({ album: key, photos });
   }
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (selectedPhoto !== null) return;
+      if (e.key === "Escape") setSelectedAlbum(null);
+    };
+
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  });
 
   return (
     <>

@@ -16,6 +16,7 @@ export const metadataPackageSchema = z.object({
       description: z.string().optional(),
       exposureTime: z.string().optional(),
       fNumber: z.string().optional(),
+      focalLength: z.number().optional(),
       height: z.number(),
       iso: z.string().optional(),
       lensMake: z.string().optional(),
