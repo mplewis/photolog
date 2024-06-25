@@ -59,6 +59,7 @@ const App = ({ albums }: { albums: Record<AlbumKey, Album> }) => {
         setSelectedPhoto={setSelectedPhoto}
       />
       <Lightbox
+        selectedAlbum={current.album}
         photos={current.photos}
         selectedPhoto={selectedPhoto}
         setSelectedPhoto={setSelectedPhoto}

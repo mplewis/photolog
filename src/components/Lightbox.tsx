@@ -9,10 +9,12 @@ import { YARL_THUMBNAIL_SIZE, fullSizes } from "../sizes";
 import "yet-another-react-lightbox/styles.css";
 import "yet-another-react-lightbox/plugins/captions.css";
 import "yet-another-react-lightbox/plugins/thumbnails.css";
+import type { AlbumKey } from "../meta";
 
 // prettyMeta is kind of expensive, so let's only do it once per photoset
 // TODO: We should really extract all this work to the Astro build stage
-const prettyMetaCache: Record<number, { title: string; description: string }> =
+// TODO: This is really nasty because the index stops working in a different album!
+const prettyMetaCache: Record<string, { title: string; description: string }> =
   {};
 
 function trimSp(s: string): string {
@@ -29,13 +31,14 @@ function trimCommonPrefixWords(base: string, toTrim: string): string {
 }
 
 function prettyMeta(
-  index: number,
+  { album, index }: { album: AlbumKey; index: number | null },
   m: OriginalMetadata
 ): {
   title: string;
   description: string;
 } {
-  if (prettyMetaCache[index]) return prettyMetaCache[index]!;
+  const cacheKey = `${album}_${index}`;
+  if (prettyMetaCache[cacheKey]) return prettyMetaCache[cacheKey]!;
 
   const t: string[] = [];
   if (m.title) t.push(m.title);
@@ -57,7 +60,6 @@ function prettyMeta(
   if (m.fNumber) {
     const fNum = parseFloat(m.fNumber);
     const match = lensSpecMatchesFNum(lens, fNum);
-    console.log({ lens, fNum, match });
     if (!match) s.push(`𝑓${m.fNumber}`);
   }
   if (m.iso) s.push(`ISO ${m.iso}`);
@@ -82,7 +84,7 @@ function prettyMeta(
     .trim();
 
   const result = { title, description };
-  prettyMetaCache[index] = result;
+  prettyMetaCache[cacheKey] = result;
   return result;
 }
 
@@ -118,10 +120,12 @@ export function lensSpecMatchesFNum(lens: string, fNum: number): boolean {
 }
 
 const Lightbox = ({
+  selectedAlbum,
   photos,
   selectedPhoto,
   setSelectedPhoto,
 }: {
+  selectedAlbum: AlbumKey;
   photos: Photoset[];
   selectedPhoto: number | null;
   setSelectedPhoto: (index: number | null) => void;
@@ -132,7 +136,10 @@ const Lightbox = ({
         `Missing ${YARL_THUMBNAIL_SIZE} size for ${JSON.stringify(photoset)}`
       );
 
-    const { title, description } = prettyMeta(i, photoset.metadata);
+    const { title, description } = prettyMeta(
+      { album: selectedAlbum, index: i },
+      photoset.metadata
+    );
 
     const srcSet = fullSizes.map(({ size }) => {
       const src = photoset.sizes[size];
