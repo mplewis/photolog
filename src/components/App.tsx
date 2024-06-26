@@ -12,7 +12,7 @@ const App = ({ albums, photos }: { albums: Album[]; photos: Photo[] }) => {
 
   const setSelectedAlbum = (i: number | null) => {
     if (i === null) {
-      setSelectedAlbum(null);
+      _setSelectedAlbum(null);
       return;
     }
     const album = albums[i];
