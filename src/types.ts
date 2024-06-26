@@ -32,14 +32,17 @@ export type MetadataPackage = z.infer<typeof metadataPackageSchema>;
 export type OriginalMetadata = MetadataPackage["original"]["_value"];
 export type ProcessedMetadata = MetadataPackage["processed"]["_value"];
 
-export type Album = {
-  /** Human-readable name of the album */
-  name: string;
-  desc: string;
-  photosets: Record<string, Photoset>;
+export type Photo = {
+  date: Date;
+  title: string;
+  description: string;
+  albums: string[];
+  assets: Asset[];
 };
 
-export type Photoset = {
-  metadata: OriginalMetadata;
-  sizes: Record<string, { url: string; width: number; height: number }>;
+export type Asset = {
+  url: string;
+  width: number;
+  height: number;
+  thumbnail: boolean;
 };

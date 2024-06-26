@@ -1,7 +1,10 @@
-export type AlbumKey = (typeof albumMeta)[number]["key"];
-export type AlbumMeta = (typeof albumMeta)[number];
+export type Album = {
+  key: string;
+  name: string;
+  desc: string;
+};
 
-export const albumMeta = [
+export const albums: Album[] = [
   {
     key: "bwca",
     name: "BWCA",
@@ -22,9 +25,9 @@ export const albumMeta = [
     name: "Colorado",
     desc: "Views from my home state",
   },
-] as const;
+];
 
-export const albumMetaByKey: Record<AlbumKey, AlbumMeta> = albumMeta.reduce(
+export const albumsByKey: Record<string, Album> = albums.reduce(
   (acc, meta) => ({ ...acc, [meta.key]: meta }),
-  {} as Record<AlbumKey, AlbumMeta>
+  {} as Record<string, Album>
 );

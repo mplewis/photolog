@@ -1,43 +1,28 @@
 import { useEffect, useState } from "react";
 
-import type { Album, Photoset } from "../types";
-
 import Nav from "./Nav";
 import Gallery from "./Gallery";
 import Lightbox from "./Lightbox";
-import type { AlbumKey } from "../meta";
+import type { Photo } from "../types";
+import type { Album } from "../meta";
 
-const App = ({ albums }: { albums: Record<AlbumKey, Album> }) => {
-  const albumToPhotoset: Record<string, Photoset[]> = { _all: [] };
-  for (const [key, { photosets }] of Object.entries(albums)) {
-    albumToPhotoset[key] = [];
-    for (const [, photoset] of Object.entries(photosets)) {
-      albumToPhotoset[key]!.push(photoset);
-      albumToPhotoset._all!.push(photoset);
-    }
-  }
-
-  // Sort all albums by date descending
-  for (const album of Object.values(albumToPhotoset)) {
-    album.sort((a, b) => {
-      if (!a.metadata.date) return -1;
-      if (!b.metadata.date) return 1;
-      return b.metadata.date.getTime() - a.metadata.date.getTime();
-    });
-  }
-
-  const [current, setCurrent] = useState<{
-    album: AlbumKey | null;
-    photos: Photoset[];
-  }>({ album: null, photos: albumToPhotoset._all! });
+const App = ({ albums, photos }: { albums: Album[]; photos: Photo[] }) => {
+  const [selectedAlbum, _setSelectedAlbum] = useState<Album | null>(null);
   const [selectedPhoto, setSelectedPhoto] = useState<number | null>(null);
 
-  function setSelectedAlbum(key: AlbumKey | null) {
-    const k = key ?? "_all";
-    const photos = albumToPhotoset[k];
-    if (!photos) throw new Error(`Album not found: ${k}`);
-    setCurrent({ album: key, photos });
-  }
+  const setSelectedAlbum = (i: number | null) => {
+    if (i === null) {
+      setSelectedAlbum(null);
+      return;
+    }
+    const album = albums[i];
+    if (!album) throw new Error(`Album index out of range: ${i}`);
+    _setSelectedAlbum(album);
+  };
+
+  const photosForAlbum = selectedAlbum
+    ? photos.filter((p) => p.albums.includes(selectedAlbum.key))
+    : photos;
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -51,18 +36,21 @@ const App = ({ albums }: { albums: Record<AlbumKey, Album> }) => {
 
   return (
     <>
-      <Nav selectedAlbum={current.album} setSelectedAlbum={setSelectedAlbum} />
+      <Nav
+        albums={albums}
+        selectedAlbum={selectedAlbum}
+        setSelectedAlbum={setSelectedAlbum}
+      />
       <Gallery
-        selectedAlbum={current.album}
-        photos={current.photos}
-        selectedPhoto={selectedPhoto}
-        setSelectedPhoto={setSelectedPhoto}
+        selectedAlbum={selectedAlbum}
+        photos={photosForAlbum}
+        index={selectedPhoto}
+        onOpen={(i: number) => setSelectedPhoto(i)}
       />
       <Lightbox
-        selectedAlbum={current.album}
-        photos={current.photos}
-        selectedPhoto={selectedPhoto}
-        setSelectedPhoto={setSelectedPhoto}
+        photos={photosForAlbum}
+        index={selectedPhoto}
+        onClose={() => setSelectedPhoto(null)}
       />
     </>
   );

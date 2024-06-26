@@ -1,4 +1,4 @@
-import { lensSpecMatchesFNum, summarizeLensFocalLength } from "./Lightbox";
+import { lensSpecMatchesFNum, summarizeLensFocalLength } from "./desc";
 
 describe("summarizeLensFocalLength", () => {
   const cases = [

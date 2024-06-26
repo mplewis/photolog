@@ -1,15 +1,22 @@
 import classNames from "classnames";
-import { albumMeta, type AlbumKey } from "../meta";
+import { type Album } from "../meta";
 import { useState } from "react";
 
 const Nav = ({
+  albums,
   selectedAlbum,
   setSelectedAlbum,
 }: {
-  selectedAlbum: AlbumKey | null;
-  setSelectedAlbum: (a: AlbumKey | null) => void;
+  albums: Album[];
+  selectedAlbum: Album | null;
+  setSelectedAlbum: (index: number | null) => void;
 }) => {
   const [showMenu, setShowMenu] = useState(false);
+
+  function isSelected(key: string): boolean {
+    if (!selectedAlbum) return false;
+    return selectedAlbum.key === key;
+  }
 
   return (
     <div className="fixed bg-white pt-4 pb-1 px-2 block w-full">
@@ -32,21 +39,17 @@ const Nav = ({
 
         {/* Desktop menu */}
         <div className="hidden desktop:block">
-          {albumMeta.map(({ key, name }, i) => (
+          {albums.map(({ key, name }, i) => (
             <button
               key={i}
               className={classNames(
                 "px-4 text-sky-700 hover:text-sky-500 transition-all",
                 {
-                  underline: selectedAlbum === key,
-                  "font-bold": selectedAlbum === key,
+                  underline: isSelected(key),
+                  "font-bold": isSelected(key),
                 }
               )}
-              onClick={() =>
-                selectedAlbum === key
-                  ? setSelectedAlbum(null)
-                  : setSelectedAlbum(key as AlbumKey)
-              }>
+              onClick={() => setSelectedAlbum(isSelected(key) ? null : i)}>
               {name}
             </button>
           ))}
@@ -65,20 +68,18 @@ const Nav = ({
       </div>
 
       <div className={classNames("pt-4", { hidden: !showMenu })}>
-        {albumMeta.map(({ key, name }, i) => (
+        {albums.map(({ key, name }, i) => (
           <button
             key={i}
             className={classNames(
               "block w-full pl-1 py-3 text-lg text-sky-700 hover:text-sky-500 transition-all text-left",
               {
-                underline: selectedAlbum === key,
-                "font-bold": selectedAlbum === key,
+                underline: isSelected(key),
+                "font-bold": isSelected(key),
               }
             )}
             onClick={() => {
-              selectedAlbum === key
-                ? setSelectedAlbum(null)
-                : setSelectedAlbum(key as AlbumKey);
+              setSelectedAlbum(isSelected(key) ? null : i);
               setShowMenu(false);
             }}>
             {name}

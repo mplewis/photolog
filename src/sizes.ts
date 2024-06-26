@@ -30,4 +30,4 @@ export const fullSizes = [
   { size: "w1800", width: 1800 },
 ] as const;
 
-export const YARL_THUMBNAIL_SIZE = "w396";
+export const YARL_THUMBNAIL_SUFFIX = "_w396";
