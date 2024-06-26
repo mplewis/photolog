@@ -44,16 +44,20 @@ const Gallery = ({
   return (
     <div className="pt-[6rem]">
       {selectedAlbum && (
-        <h1 className="text-lg px-2">
+        <h1 className="text-lg px-2 text-black dark:text-white">
           Album: <span className="font-semibold">{selectedAlbum.name}</span>
           <br />
-          <em>{selectedAlbum.desc}</em>
+          <span className="italic text-black dark:text-slate-300">
+            {selectedAlbum.desc}
+          </span>
         </h1>
       )}
 
       {dateGroups.map(({ dateGroup, photos }) => (
         <div key={dateGroup}>
-          <h1 className="text-2xl pl-2 pt-4 pb-1 font-semibold">{dateGroup}</h1>
+          <h1 className="text-2xl pl-2 pt-4 pb-1 font-semibold text-black dark:text-white">
+            {dateGroup}
+          </h1>
 
           <div className="grid grid-cols-3 s4:grid-cols-4 s5:grid-cols-5 s6:grid-cols-6 s7:grid-cols-7 s8:grid-cols-8 s9:grid-cols-9 s10:grid-cols-10 s11:grid-cols-11 s12:grid-cols-12">
             {photos.map((photo) => {
@@ -73,7 +77,7 @@ const Gallery = ({
                     <source sizes={gridSourceSizes} srcSet={srcSet} />
                     <img
                       className={classNames(
-                        "w-full h-full object-cover hover:border-8 border-white transition-all duration-300",
+                        "w-full h-full object-cover hover:border-8 border-transparent transition-all duration-300",
                         { "border-8": index === i }
                       )}
                     />
