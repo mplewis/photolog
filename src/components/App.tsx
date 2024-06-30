@@ -35,6 +35,7 @@ const App = ({ albums, photos }: { albums: Album[]; photos: Photo[] }) => {
   const [selectedAlbum, _setSelectedAlbum] = useState<Album | null>(null);
   const [selectedPhoto, setSelectedPhoto] = useState<number | null>(null);
   const [hash, setHash] = useHash();
+  const [initialMount, setInitialMount] = useState(true);
 
   function setSelectedAlbum(i: number | null) {
     if (i === null) {
@@ -64,6 +65,8 @@ const App = ({ albums, photos }: { albums: Album[]; photos: Photo[] }) => {
   }
 
   function updateHash() {
+    if (initialMount) return;
+
     const parts = [selectedAlbum?.key, selectedPhoto].filter(
       (p) => p !== null && p !== undefined
     );
@@ -74,7 +77,6 @@ const App = ({ albums, photos }: { albums: Album[]; photos: Photo[] }) => {
 
   useEffect(() => {
     const parts = hash.split("/").slice(1);
-    console.log("hash", hash, "parts", ...parts);
     if (parts.length === 0) return;
 
     if (parts.length === 1) {
@@ -94,10 +96,6 @@ const App = ({ albums, photos }: { albums: Album[]; photos: Photo[] }) => {
     setSelectedPhoto(parseInt(parts[1]!));
   }, [hash]);
 
-  const photosForAlbum = selectedAlbum
-    ? photos.filter((p) => p.albums.includes(selectedAlbum.key))
-    : photos;
-
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (selectedPhoto !== null) return;
@@ -107,6 +105,12 @@ const App = ({ albums, photos }: { albums: Album[]; photos: Photo[] }) => {
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
   });
+
+  useEffect(() => setInitialMount(false), []);
+
+  const photosForAlbum = selectedAlbum
+    ? photos.filter((p) => p.albums.includes(selectedAlbum.key))
+    : photos;
 
   return (
     <>
