@@ -17,10 +17,12 @@ function filenameEndsWithSuffix(filename: string, suffix: string) {
 const Lightbox = ({
   photos,
   index,
+  onView,
   onClose,
 }: {
   photos: Photo[];
   index: number | null;
+  onView: (index: number) => void;
   onClose: () => void;
 }) => {
   const slides: SlideImage[] = photos.map((photo) => {
@@ -51,6 +53,7 @@ const Lightbox = ({
       close={onClose}
       index={index ?? 0}
       slides={slides}
+      on={{ view: ({ index }) => onView(index) }}
       carousel={{
         padding: 0,
       }}
