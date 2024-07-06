@@ -1,6 +1,8 @@
 import dayjs from "dayjs";
 import type { OriginalMetadata } from "../types";
 
+const IGNORE_F_AT = 1.0; // Fujifilm reports f/1.0 for non-electronic lenses
+
 function trimSp(s: string): string {
   return s.replace(/\s+/g, " ").trim();
 }
@@ -68,8 +70,10 @@ export function describeMetadata(m: OriginalMetadata): {
   if (m.exposureTime) s.push(`${m.exposureTime}s`);
   if (m.fNumber) {
     const fNum = parseFloat(m.fNumber);
-    const match = lensSpecMatchesFNum(lens, fNum);
-    if (!match) s.push(`𝑓${m.fNumber}`);
+    if (fNum != IGNORE_F_AT) {
+      const match = lensSpecMatchesFNum(lens, fNum);
+      if (!match) s.push(`𝑓${m.fNumber}`);
+    }
   }
   if (m.iso) s.push(`ISO ${m.iso}`);
   const settings = s.join(", ");
