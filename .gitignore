@@ -23,5 +23,6 @@ pnpm-debug.log*
 # jetbrains setting folder
 .idea/
 
+tmp/
 public/photos
 public/open-graph.jpg
