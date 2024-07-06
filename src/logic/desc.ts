@@ -128,14 +128,9 @@ export function guessTzFromIsoDate(d: string): string {
 }
 
 export function describeMetadata(m: Metadata): {
-  title: string;
+  title?: string | undefined;
   description: string;
 } {
-  const t: string[] = [];
-  if (m.title) t.push(m.title);
-  if (m.location) t.push(m.location);
-  const title = t.join(", ");
-
   const camera = trimSp(`${m.cameraMake || ""} ${m.cameraModel || ""}`);
   let lens = trimSp(`${m.lensMake || ""} ${m.lensModel || ""}`);
   lens = trimCommonPrefixWords(camera, lens);
@@ -173,11 +168,12 @@ export function describeMetadata(m: Metadata): {
     // photoset.sizes[YARL_THUMBNAIL_SIZE].url,
     m.description && m.description + "\n",
     dayjs(m.date).format("dddd, MMMM D, YYYY"),
+    m.location,
     details,
   ]
     .filter(Boolean)
     .join("\n")
     .trim();
 
-  return { title, description };
+  return { title: m.title, description };
 }
