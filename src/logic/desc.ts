@@ -3,6 +3,23 @@ import type { OriginalMetadata } from "../types";
 
 const IGNORE_F_AT = 1.0; // Fujifilm reports f/1.0 for non-electronic lenses
 
+interface Metadata
+  extends Pick<
+    OriginalMetadata,
+    | "cameraMake"
+    | "cameraModel"
+    | "date"
+    | "description"
+    | "exposureTime"
+    | "fNumber"
+    | "focalLength"
+    | "iso"
+    | "lensMake"
+    | "lensModel"
+    | "location"
+    | "title"
+  > {}
+
 function trimSp(s: string): string {
   return s.replace(/\s+/g, " ").trim();
 }
@@ -47,7 +64,7 @@ export function lensSpecMatchesFNum(lens: string, fNum: number): boolean {
   return Math.abs(lensFNum - fNum) < 0.1;
 }
 
-export function describeMetadata(m: OriginalMetadata): {
+export function describeMetadata(m: Metadata): {
   title: string;
   description: string;
 } {
