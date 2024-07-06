@@ -23,6 +23,7 @@ interface Metadata
     | "iso"
     | "lensMake"
     | "lensModel"
+    | "localDate"
     | "location"
     | "title"
   > {}
@@ -140,9 +141,16 @@ export function describeMetadata(m: Metadata): {
 
   const profile = parseCameraProfile(m.cameraProfile);
 
+  let localDate: string | undefined;
+  if (m.localDate) {
+    const [y, mo, d, h, mi, s] = m.localDate;
+    const parsed = dayjs(`${y}-${mo}-${d} ${h}:${mi}:${s}`);
+    localDate = parsed.format("ddd MMM D HH:mm");
+  }
+
   const d: (string | null | undefined)[] = [
+    localDate,
     m.location,
-    dayjs(m.date).format("ddd YYYY-MM-DD"),
     camera,
     ...lensAndFL,
     settings,

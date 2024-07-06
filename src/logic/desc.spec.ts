@@ -1,6 +1,5 @@
 import {
   chunksToLines,
-  guessTzFromIsoDate,
   lensSpecMatchesFNum,
   summarizeLensFocalLength,
 } from "./desc";
