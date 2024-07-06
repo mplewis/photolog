@@ -5,13 +5,16 @@ import type { OriginalMetadata } from "../types";
 const { breakLines } = texLinebreak;
 type TextInputItem = texLinebreak.TextInputItem;
 
+const CAPTION_MAX_LEN = 20;
 const IGNORE_F_AT = 1.0; // Fujifilm reports f/1.0 for non-electronic lenses
+const PROFILE_RE = /^Camera (.+)$/; // Match Fujifilm "Camera CLASSIC CHROME" and ignore others
 
 interface Metadata
   extends Pick<
     OriginalMetadata,
     | "cameraMake"
     | "cameraModel"
+    | "cameraProfile"
     | "date"
     | "description"
     | "exposureTime"
@@ -103,6 +106,12 @@ export function chunksToLines(
   return lines.map((line) => line.join(", "));
 }
 
+function parseCameraProfile(profile?: string): string | null {
+  if (!profile) return null;
+  const match = profile.match(PROFILE_RE);
+  return (match && match[1]) ?? null;
+}
+
 export function describeMetadata(m: Metadata): {
   title: string;
   description: string;
@@ -134,11 +143,14 @@ export function describeMetadata(m: Metadata): {
   if (m.iso) s.push(`ISO ${m.iso}`);
   const settings = s.join(", ");
 
+  const profile = parseCameraProfile(m.cameraProfile);
+
   const d: string[] = [];
   if (camera) d.push(camera);
   if (lensAndFL) d.push(...lensAndFL);
   if (settings) d.push(settings);
-  const details = d.join(", ");
+  if (profile) d.push(`Profile: ${profile}`);
+  const details = chunksToLines(CAPTION_MAX_LEN, d).join("\n");
 
   if (!m.date) throw new Error(`Missing date for ${JSON.stringify(m)}`);
 

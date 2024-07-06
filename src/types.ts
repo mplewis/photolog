@@ -10,6 +10,7 @@ export const metadataPackageSchema = z.object({
   ),
   original: z.record(
     z.object({
+      cameraProfile: z.string().optional(),
       cameraMake: z.string().optional(),
       cameraModel: z.string().optional(),
       date: z.coerce.date().optional(),
