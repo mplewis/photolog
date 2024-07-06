@@ -1,5 +1,9 @@
 import dayjs from "dayjs";
+import texLinebreak from "tex-linebreak";
 import type { OriginalMetadata } from "../types";
+
+const { breakLines } = texLinebreak;
+type TextInputItem = texLinebreak.TextInputItem;
 
 const IGNORE_F_AT = 1.0; // Fujifilm reports f/1.0 for non-electronic lenses
 
@@ -62,6 +66,41 @@ export function lensSpecMatchesFNum(lens: string, fNum: number): boolean {
   const lensFNum = parseFloat(fnMatch[0]);
 
   return Math.abs(lensFNum - fNum) < 0.1;
+}
+
+export function chunksToLines(
+  maxLen: number,
+  chunks: string[],
+  sep = ", "
+): string[] {
+  const glue = {
+    type: "glue",
+    text: sep,
+    width: sep.length,
+    stretch: 0,
+    shrink: 0,
+  } as const;
+  const items: TextInputItem[] = [];
+  for (let i = 0; i < chunks.length; i++) {
+    const chunk = chunks[i]!;
+    items.push({ type: "box", width: chunk.length, text: chunk });
+    if (i < chunks.length - 1) items.push(glue);
+  }
+
+  const breakpoints = breakLines(items, maxLen);
+
+  const lines: string[][] = [];
+  let lineIdx = -1;
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i]!;
+    if (breakpoints.includes(i)) {
+      lineIdx++;
+      lines[lineIdx] = [];
+    }
+    if (item.type !== "box") continue;
+    lines[lineIdx]!.push(item.text);
+  }
+  return lines.map((line) => line.join(", "));
 }
 
 export function describeMetadata(m: Metadata): {
