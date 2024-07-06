@@ -26,6 +26,7 @@ const styles = {
     display: "inline-block",
     marginTop: "8px",
     padding: "4px 10px",
+    paddingLeft: "16px",
     fontSize: "1.2em",
     borderTopRightRadius: "8px",
     borderBottomRightRadius: "8px",

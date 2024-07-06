@@ -140,22 +140,20 @@ export function describeMetadata(m: Metadata): {
 
   const profile = parseCameraProfile(m.cameraProfile);
 
-  const d: string[] = [];
-  if (camera) d.push(camera);
-  if (lensAndFL) d.push(...lensAndFL);
-  if (settings) d.push(settings);
-  if (profile) d.push(`Profile: ${profile}`);
-  const details = chunksToLines(CAPTION_MAX_LEN, d).join("\n");
+  const d: (string | null | undefined)[] = [
+    m.location,
+    dayjs(m.date).format("ddd YYYY-MM-DD"),
+    camera,
+    ...lensAndFL,
+    settings,
+    profile && `Profile: ${profile}`,
+  ];
+  const dx = d.filter(Boolean) as string[];
+  const details = chunksToLines(CAPTION_MAX_LEN, dx).join("\n");
 
   if (!m.date) throw new Error(`Missing date for ${JSON.stringify(m)}`);
 
-  const description = [
-    // photoset.sizes[YARL_THUMBNAIL_SIZE].url,
-    m.description && m.description + "\n",
-    dayjs(m.date).format("dddd, MMMM D, YYYY"),
-    m.location,
-    details,
-  ]
+  const description = [details, m.description]
     .filter(Boolean)
     .join("\n")
     .trim();
