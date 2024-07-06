@@ -1,5 +1,6 @@
 import {
   chunksToLines,
+  guessTzFromIsoDate,
   lensSpecMatchesFNum,
   summarizeLensFocalLength,
 } from "./desc";
@@ -115,4 +116,24 @@ describe(chunksToLines, () => {
       ]
     `);
   });
+});
+
+describe("guessTzFromIsoDate", () => {
+  const cases = [
+    ["2024-05-03T12:00:00Z", "Etc/UTC"],
+    ["2024-05-03T12:00:00+00:00", "Europe/Dublin"],
+    ["2024-05-03T12:00:00-00:00", "Europe/Dublin"],
+    ["2022-06-01T12:00:00-04:00", "America/New_York"],
+    ["2022-06-01T12:00:00-05:00", "America/Chicago"],
+    ["2022-06-01T12:00:00-06:00", "America/Denver"],
+    ["2022-06-01T12:00:00-07:00", "America/Los_Angeles"],
+    ["2022-06-01T12:00:00+09:00", "Asia/Tokyo"],
+    ["some invalid date", "Etc/UTC"],
+  ] as const;
+
+  for (const [date, tz] of cases) {
+    it(`guesses the timezone for ${date} as ${tz}`, () => {
+      expect(guessTzFromIsoDate(date)).toEqual(tz);
+    });
+  }
 });

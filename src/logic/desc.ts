@@ -1,6 +1,10 @@
 import dayjs from "dayjs";
+import timezone from "dayjs/plugin/timezone";
 import texLinebreak from "tex-linebreak";
 import type { OriginalMetadata } from "../types";
+import commonTZ from "./commonTZ.json";
+
+dayjs.extend(timezone);
 
 const { breakLines } = texLinebreak;
 type TextInputItem = texLinebreak.TextInputItem;
@@ -110,6 +114,17 @@ function parseCameraProfile(profile?: string): string | null {
   if (!profile) return null;
   const match = profile.match(PROFILE_RE);
   return (match && match[1]) ?? null;
+}
+
+export function guessTzFromIsoDate(d: string): string {
+  const fallback = "Etc/UTC";
+  const tzForOffset = commonTZ as Record<string, string>;
+  // Parse the offset from the end of the date string (+01:00, -07:00, or Z)
+  const offsetRe = /([+-]\d{2}:\d{2}|Z)$/;
+  const offsetMatch = d.match(offsetRe);
+  return (
+    (offsetMatch && offsetMatch[1] && tzForOffset[offsetMatch[1]]) ?? fallback
+  );
 }
 
 export function describeMetadata(m: Metadata): {
