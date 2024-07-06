@@ -36,8 +36,8 @@ function trimCommonPrefixWords(base: string, toTrim: string): string {
 export function summarizeLensFocalLength(
   lens: string,
   focalLength: number
-): string {
-  const combined = `${lens} @ ${Math.round(focalLength)}mm`;
+): string[] {
+  const combined = [lens, `${Math.round(focalLength)}mm`];
 
   // If the lens spec has a range, e.g. 16-80mm, always show focal length
   if (lens.match(/\d+-\d+mm/)) return combined;
@@ -49,7 +49,7 @@ export function summarizeLensFocalLength(
 
   // If the lens spec matches the actual focal length, omit it
   const match = Math.abs(parsedFocalLength - focalLength) < 1.0;
-  return match ? lens : combined;
+  return match ? [lens] : combined;
 }
 
 export function lensSpecMatchesFNum(lens: string, fNum: number): boolean {
@@ -79,7 +79,7 @@ export function describeMetadata(m: Metadata): {
   // TODO: Prettify all lens names by using regex replace for [Ff𝑓]/?\d+(.\d+)?
   lens = lens.replaceAll("f/", "𝑓").replaceAll("F/", "𝑓");
 
-  let lensAndFL = lens;
+  let lensAndFL = [lens];
   if (lens && m.focalLength)
     lensAndFL = summarizeLensFocalLength(lens, m.focalLength);
 
@@ -97,7 +97,7 @@ export function describeMetadata(m: Metadata): {
 
   const d: string[] = [];
   if (camera) d.push(camera);
-  if (lensAndFL) d.push(lensAndFL);
+  if (lensAndFL) d.push(...lensAndFL);
   if (settings) d.push(settings);
   const details = d.join(", ");
 
