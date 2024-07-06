@@ -83,6 +83,29 @@ const Lightbox = ({
     return { title, description, srcSet, src, width, height };
   });
 
+  // HACK: Force re-layout of captions when they appear. This is an issue with Firefox,
+  // where inline nowrap captions render with unwanted whitespace on the right side
+  // of the first line of text, or the last line of text comes with an unnecessary wrap.
+  useEffect(() => {
+    const SENTINEL_CLASS = "__hack-layout-fixed";
+    const int = setInterval(() => {
+      const descs = Array.prototype.slice
+        .call(document.querySelectorAll(".yarl__slide_description"))
+        .filter((e) => !e.classList.contains(SENTINEL_CLASS));
+
+      window.requestAnimationFrame(() => {
+        descs.forEach((e) => e.style.setProperty("text-align", "left"));
+        window.requestAnimationFrame(() => {
+          descs.forEach((e) => e.style.setProperty("text-align", "right"));
+        });
+      });
+
+      descs.forEach((e) => e.classList.add(SENTINEL_CLASS));
+    }, 200);
+
+    return () => clearInterval(int);
+  }, []);
+
   return (
     <YARL
       styles={styles}
