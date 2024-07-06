@@ -8,11 +8,43 @@ import type { Photo } from "../types";
 import "yet-another-react-lightbox/styles.css";
 import "yet-another-react-lightbox/plugins/captions.css";
 import "yet-another-react-lightbox/plugins/thumbnails.css";
+import { useEffect } from "react";
 
 function filenameEndsWithSuffix(filename: string, suffix: string) {
   const filenameNoExt = filename.split(".").slice(0, -1).join(".");
   return filenameNoExt.endsWith(suffix);
 }
+
+const styles = {
+  captionsTitleContainer: {
+    background: "none",
+    padding: "0",
+  },
+  captionsTitle: {
+    background: "rgba(0, 0, 0, 0.65)",
+    display: "inline-block",
+    padding: "4px 10px",
+    fontSize: "1.2em",
+    borderBottomRightRadius: "8px",
+  },
+  captionsDescriptionContainer: {
+    background: "none",
+    left: "unset",
+    padding: "8px",
+    textAlign: "right",
+  },
+  captionsDescription: {
+    background: "rgba(0, 0, 0, 0.65)",
+    display: "inline",
+    padding: "5px 8px",
+    textAlign: "right",
+    lineHeight: "32px",
+    borderRadius: "4px",
+    boxDecorationBreak: "clone",
+    "-webkit-box-decoration-break": "clone",
+    whiteSpace: "nowrap",
+  },
+} as const;
 
 const Lightbox = ({
   photos,
@@ -46,8 +78,32 @@ const Lightbox = ({
     return { title, description, srcSet, src, width, height };
   });
 
+  // HACK: Force re-layout of captions when they appear. This is an issue with Firefox,
+  // where nowrapped inline captions render with unwanted whitespace on the right side
+  // of the first line of text.
+  useEffect(() => {
+    const SENTINEL_CLASS = "__hack-layout-fixed";
+    const int = setInterval(() => {
+      const descs = Array.prototype.slice
+        .call(document.querySelectorAll(".yarl__slide_description"))
+        .filter((e) => !e.classList.contains(SENTINEL_CLASS));
+
+      window.requestAnimationFrame(() => {
+        descs.forEach((e) => e.style.setProperty("text-align", "left"));
+        window.requestAnimationFrame(() => {
+          descs.forEach((e) => e.style.setProperty("text-align", "right"));
+        });
+      });
+
+      descs.forEach((e) => e.classList.add(SENTINEL_CLASS));
+    }, 200);
+
+    return () => clearInterval(int);
+  }, []);
+
   return (
     <YARL
+      styles={styles}
       plugins={[Captions, Thumbnails]}
       open={index != null}
       close={onClose}
