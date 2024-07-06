@@ -28,10 +28,12 @@ interface Metadata
     | "title"
   > {}
 
+/** Replace all instances of 2+ spaces with 1 space. */
 function trimSp(s: string): string {
   return s.replace(/\s+/g, " ").trim();
 }
 
+/** For two strings of space-delineated words, return `toTrim` without any shared prefix words from `base`. */
 function trimCommonPrefixWords(base: string, toTrim: string): string {
   const baseWords = base.split(" ");
   const toTrimWords = toTrim.split(" ");
@@ -41,6 +43,7 @@ function trimCommonPrefixWords(base: string, toTrim: string): string {
   return toTrimWords.slice(baseWords.length).join(" ");
 }
 
+/** Summarize a lens and focal length, omitting the focal length if it is equal to the prime lens length. */
 export function summarizeLensFocalLength(
   lens: string,
   focalLength: number
@@ -60,6 +63,7 @@ export function summarizeLensFocalLength(
   return match ? [lens] : combined;
 }
 
+/** True if the lens spec contains the given focal length, false otherwise. */
 export function lensSpecMatchesFNum(lens: string, fNum: number): boolean {
   const lensFNumMatches = lens.match(/[Ff𝑓]\/?(\d+(.\d+)?)/g);
   if (!lensFNumMatches) return false;
@@ -72,6 +76,7 @@ export function lensSpecMatchesFNum(lens: string, fNum: number): boolean {
   return Math.abs(lensFNum - fNum) < 0.1;
 }
 
+/** Convert a set of indivisible chunks into a series of lines fitting within `maxLen` cols, joined by `sep`. */
 export function chunksToLines(
   maxLen: number,
   chunks: string[],
@@ -107,26 +112,32 @@ export function chunksToLines(
   return lines.map((line) => line.join(", "));
 }
 
+/** Parse a `Camera SOME PROFILE => SOME PROFILE` value from Fujifilm `CameraProfile` metadata. */
 function parseCameraProfile(profile?: string): string | null {
   if (!profile) return null;
   const match = profile.match(PROFILE_RE);
   return (match && match[1]) ?? null;
 }
 
+/** Summarize a set of camera metadata into a photo title and description. */
 export function describeMetadata(m: Metadata): {
   title?: string | undefined;
   description: string;
 } {
+  if (!m.date) throw new Error(`Missing date for ${JSON.stringify(m)}`);
+
   const camera = trimSp(`${m.cameraMake || ""} ${m.cameraModel || ""}`);
   let lens = trimSp(`${m.lensMake || ""} ${m.lensModel || ""}`);
   lens = trimCommonPrefixWords(camera, lens);
   // TODO: Prettify all lens names by using regex replace for [Ff𝑓]/?\d+(.\d+)?
   lens = lens.replaceAll("f/", "𝑓").replaceAll("F/", "𝑓");
 
+  // Summarize lens and focal length
   let lensAndFL = [lens];
   if (lens && m.focalLength)
     lensAndFL = summarizeLensFocalLength(lens, m.focalLength);
 
+  // Summarize core settings
   const s: string[] = [];
   if (m.exposureTime) s.push(`${m.exposureTime}s`);
   if (m.fNumber) {
@@ -138,9 +149,9 @@ export function describeMetadata(m: Metadata): {
   }
   if (m.iso) s.push(`ISO ${m.iso}`);
   const settings = s.join(", ");
-
   const profile = parseCameraProfile(m.cameraProfile);
 
+  // Format local date
   let localDate: string | undefined;
   if (m.localDate) {
     const [y, mo, d, h, mi, s] = m.localDate;
@@ -148,6 +159,7 @@ export function describeMetadata(m: Metadata): {
     localDate = parsed.format("ddd MMM D HH:mm");
   }
 
+  // Combine details into desc chunks, then layout into lines
   const d: (string | null | undefined)[] = [
     localDate,
     m.location,
@@ -159,8 +171,7 @@ export function describeMetadata(m: Metadata): {
   const dx = d.filter(Boolean) as string[];
   const details = chunksToLines(CAPTION_MAX_LEN, dx).join("\n");
 
-  if (!m.date) throw new Error(`Missing date for ${JSON.stringify(m)}`);
-
+  // Build final description
   const description = [details, m.description]
     .filter(Boolean)
     .join("\n")
