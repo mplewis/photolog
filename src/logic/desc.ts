@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
 import type { OriginalMetadata } from "../types";
 
-const CAPTION_MAX_LEN = 20;
+const CAPTION_MAX_LEN = 40; // Fits within iPhone Mini screen width
 const IGNORE_F_AT = 1.0; // Fujifilm reports f/1.0 for non-electronic lenses
 const PROFILE_RE = /^Camera (.+)$/; // Match Fujifilm "Camera CLASSIC CHROME" and ignore others
 
@@ -120,8 +120,6 @@ export function chunksToLines(
 
   // Step 3: Evaluate permutations
   function evalLines(average: number, lengths: number[]): number {
-    // Perms that exceed the max length are invalid
-    if (lengths.some((l) => l > maxLen)) return Infinity;
     // Calculate the sum of the squares of the differences
     let sum = 0;
     for (const l of lengths) {
@@ -131,7 +129,7 @@ export function chunksToLines(
   }
 
   const avgLineL = lineL.reduce((a, b) => a + b, 0) / lineL.length;
-  const best = { score: Infinity, perm: [-1] };
+  const best = { score: Infinity, perm: [-1], nonCompliantLineCount: Infinity };
 
   for (let permI = 0; permI < perms.length; permI++) {
     const perm = perms[permI]!;
@@ -146,14 +144,20 @@ export function chunksToLines(
         currLineL += sepL;
       }
     }
+    currLineL -= sepL;
     linesL.push(currLineL);
-
-    if (linesL.some((l) => l > maxLen)) continue;
 
     const score = evalLines(avgLineL, linesL);
     if (score < best.score) {
-      best.perm = perm;
-      best.score = score;
+      const nonCompliantLineCount = linesL.filter((l) => l > maxLen).length;
+      if (
+        score < best.score &&
+        nonCompliantLineCount <= best.nonCompliantLineCount
+      ) {
+        best.score = score;
+        best.perm = perm;
+        best.nonCompliantLineCount = nonCompliantLineCount;
+      }
     }
   }
 
@@ -168,7 +172,6 @@ export function chunksToLines(
     }
   }
   lines.push(line.join(sep));
-
   return lines;
 }
 

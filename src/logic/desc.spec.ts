@@ -78,5 +78,121 @@ describe("chunksToLines", () => {
         "thought i would sail about a little",
       ]
     `);
+
+    expect(
+      chunksToLines(40, [
+        "Thu Apr 25 15:05",
+        "Longmont, CO",
+        "FUJIFILM X-T4",
+        "16mm Izukar",
+        "1/800s, ISO 800",
+        "Profile: CLASSIC CHROME",
+      ])
+    ).toMatchInlineSnapshot(`
+      [
+        "Thu Apr 25 15:05, Longmont, CO",
+        "FUJIFILM X-T4, 16mm Izukar",
+        "1/800s, ISO 800, Profile: CLASSIC CHROME",
+      ]
+    `);
+
+    expect(
+      chunksToLines(40, [
+        "Thu May 2 10:02",
+        "Longmont, CO",
+        "FUJIFILM X-T4",
+        "XF27mmF2.8 R WR",
+        "1/2000s, ISO 320",
+        "Profile: Velvia/Vivid",
+      ])
+    ).toMatchInlineSnapshot(`
+      [
+        "Thu May 2 10:02, Longmont, CO",
+        "FUJIFILM X-T4, XF27mmF2.8 R WR",
+        "1/2000s, ISO 320, Profile: Velvia/Vivid",
+      ]
+    `);
+
+    expect(
+      chunksToLines(40, [
+        "Thu Apr 25 15:05",
+        "Longmont, CO",
+        "FUJIFILM X-T4",
+        "16mm Izukar",
+        "1/800s, ISO 800",
+        "Profile: CLASSIC CHROME",
+      ])
+    ).toMatchInlineSnapshot(`
+      [
+        "Thu Apr 25 15:05, Longmont, CO",
+        "FUJIFILM X-T4, 16mm Izukar",
+        "1/800s, ISO 800, Profile: CLASSIC CHROME",
+      ]
+    `);
+
+    expect(
+      chunksToLines(40, [
+        "Tue Apr 23 11:48",
+        "Longmont, CO",
+        "FUJIFILM X-T4",
+        "XF27mmF2.8 R WR",
+        "1/3800s, ISO 640",
+        "Profile: Velvia/Vivid",
+      ])
+    ).toMatchInlineSnapshot(`
+      [
+        "Tue Apr 23 11:48, Longmont, CO",
+        "FUJIFILM X-T4, XF27mmF2.8 R WR",
+        "1/3800s, ISO 640, Profile: Velvia/Vivid",
+      ]
+    `);
+
+    expect(
+      chunksToLines(40, [
+        "Sat Mar 23 20:46",
+        "Estes Park, CO",
+        "FUJIFILM X-T4",
+        "25mm TV",
+        "1/30s, ISO 12800",
+      ])
+    ).toMatchInlineSnapshot(`
+      [
+        "Sat Mar 23 20:46, Estes Park, CO",
+        "FUJIFILM X-T4, 25mm TV, 1/30s, ISO 12800",
+      ]
+    `);
+
+    expect(
+      chunksToLines(40, [
+        "Fri Mar 22 18:59",
+        "Estes Park, CO",
+        "FUJIFILM X-T4",
+        "25mm TV",
+        "1/250s, ISO 6400",
+      ])
+    ).toMatchInlineSnapshot(`
+      [
+        "Fri Mar 22 18:59, Estes Park, CO",
+        "FUJIFILM X-T4, 25mm TV, 1/250s, ISO 6400",
+      ]
+    `);
+
+    expect(
+      chunksToLines(40, [
+        "Sat May 25 23:09",
+        "Boundary Waters Canoe Area, MN",
+        "FUJIFILM X-T4",
+        "12mm Rokinon",
+        "13s, ISO 12800",
+        "Profile: PROVIA/Standard",
+      ])
+    ).toMatchInlineSnapshot(`
+      [
+        "Sat May 25 23:09",
+        "Boundary Waters Canoe Area, MN",
+        "FUJIFILM X-T4, 12mm Rokinon",
+        "13s, ISO 12800, Profile: PROVIA/Standard",
+      ]
+    `);
   });
 });
