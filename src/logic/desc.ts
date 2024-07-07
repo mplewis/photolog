@@ -1,9 +1,5 @@
 import dayjs from "dayjs";
-import texLinebreak from "tex-linebreak";
 import type { OriginalMetadata } from "../types";
-
-const { breakLines } = texLinebreak;
-type TextInputItem = texLinebreak.TextInputItem;
 
 const CAPTION_MAX_LEN = 20;
 const IGNORE_F_AT = 1.0; // Fujifilm reports f/1.0 for non-electronic lenses
@@ -82,34 +78,98 @@ export function chunksToLines(
   chunks: string[],
   sep = ", "
 ): string[] {
-  const glue = {
-    type: "glue",
-    text: sep,
-    width: sep.length,
-    stretch: 0,
-    shrink: 0,
-  } as const;
-  const items: TextInputItem[] = [];
-  for (let i = 0; i < chunks.length; i++) {
-    const chunk = chunks[i]!;
-    items.push({ type: "box", width: chunk.length, text: chunk });
-    if (i < chunks.length - 1) items.push(glue);
-  }
+  const chunkC = chunks.length;
+  const chunksL = chunks.map((c) => c.length);
+  const sepL = sep.length;
 
-  const breakpoints = breakLines(items, maxLen);
-
-  const lines: string[][] = [];
-  let lineIdx = -1;
-  for (let i = 0; i < items.length; i++) {
-    const item = items[i]!;
-    if (breakpoints.includes(i)) {
+  // Step 1: Find the min # of lines required, greedily
+  const lineL: number[] = [chunksL[0] ?? 0];
+  let lineIdx = 0;
+  for (let i = 1; i < chunksL.length; i++) {
+    const chunkL = chunksL[i]!;
+    if (lineL[lineIdx]! + sepL + chunkL <= maxLen) {
+      lineL[lineIdx]! += sepL + chunkL;
+    } else {
       lineIdx++;
-      lines[lineIdx] = [];
+      lineL[lineIdx] = chunkL;
     }
-    if (item.type !== "box") continue;
-    lines[lineIdx]!.push(item.text);
   }
-  return lines.map((line) => line.join(", "));
+  const greedyLC = lineL.length;
+  const sepC = greedyLC - 1;
+
+  // Step 2: Permute separators
+  function generatePermutationIndices(items: number, separators: number) {
+    const permutations: number[][] = [];
+    function gen(current: number[], start: number): void {
+      if (current.length === separators) {
+        permutations.push(current.slice()); // Add a copy of current permutation
+        return;
+      }
+      for (let i = start; i < items; i++) {
+        current.push(i);
+        gen(current, i + 1);
+        current.pop();
+      }
+      return;
+    }
+    gen([], 0);
+    return permutations;
+  }
+
+  const perms = generatePermutationIndices(chunkC, sepC);
+
+  // Step 3: Evaluate permutations
+  function evalLines(average: number, lengths: number[]): number {
+    // Perms that exceed the max length are invalid
+    if (lengths.some((l) => l > maxLen)) return Infinity;
+    // Calculate the sum of the squares of the differences
+    let sum = 0;
+    for (const l of lengths) {
+      sum += Math.pow(average - l, 2);
+    }
+    return sum;
+  }
+
+  const avgLineL = lineL.reduce((a, b) => a + b, 0) / lineL.length;
+  const best = { score: Infinity, perm: [-1] };
+
+  for (let permI = 0; permI < perms.length; permI++) {
+    const perm = perms[permI]!;
+    const linesL: number[] = [];
+    let currLineL = 0;
+    for (let chunkI = 0; chunkI < chunks.length; chunkI++) {
+      currLineL += chunksL[chunkI]!;
+      if (perm!.includes(chunkI)) {
+        linesL.push(currLineL);
+        currLineL = 0;
+      } else {
+        currLineL += sepL;
+      }
+    }
+    linesL.push(currLineL);
+
+    if (linesL.some((l) => l > maxLen)) continue;
+
+    const score = evalLines(avgLineL, linesL);
+    if (score < best.score) {
+      best.perm = perm;
+      best.score = score;
+    }
+  }
+
+  // Step 4: Reconstruct lines
+  const lines: string[] = [];
+  let line: string[] = [];
+  for (let i = 0; i < chunks.length; i++) {
+    line.push(chunks[i]!);
+    if (best.perm.includes(i)) {
+      lines.push(line.join(sep));
+      line = [];
+    }
+  }
+  lines.push(line.join(sep));
+
+  return lines;
 }
 
 /** Parse a `Camera SOME PROFILE => SOME PROFILE` value from Fujifilm `CameraProfile` metadata. */
