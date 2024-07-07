@@ -10,8 +10,8 @@ import "yet-another-react-lightbox/plugins/captions.css";
 import "yet-another-react-lightbox/plugins/thumbnails.css";
 import { useEffect } from "react";
 
-function filenameEndsWithSuffix(filename: string, suffix: string) {
-  const filenameNoExt = filename.split(".").slice(0, -1).join(".");
+function filenameEndsWithUnhashedSuffix(filename: string, suffix: string) {
+  const filenameNoExt = filename.split(".").slice(0, -2).join("."); // -2 to remove the hash and the extension
   return filenameNoExt.endsWith(suffix);
 }
 
@@ -71,7 +71,9 @@ const Lightbox = ({
       height,
     }));
     const yarlThumbnail = photo.assets.find(
-      (a) => a.thumbnail && filenameEndsWithSuffix(a.url, YARL_THUMBNAIL_SUFFIX)
+      (a) =>
+        a.thumbnail &&
+        filenameEndsWithUnhashedSuffix(a.url, YARL_THUMBNAIL_SUFFIX)
     );
     if (!yarlThumbnail)
       throw new Error(
