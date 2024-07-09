@@ -3,7 +3,7 @@ import MainLayout from "../layouts/MainLayout.astro";
 import App from "../components/App.tsx";
 import { metadataPackageSchema, type Photo } from "../types";
 import { albums, albumsByKey } from "../meta";
-import _metadata from "../../public/photos/metadata.json";
+import _metadata from "../../../tmp/metadata.json";
 import { describeMetadata } from "../logic/desc";
 
 const imageRoot = "/photos";

@@ -8,7 +8,8 @@
   "scripts": {
     "postinstall": "pnpm run install-deps",
     "install-deps": "wireit",
-    "process": "wireit"
+    "imgpipel": "wireit",
+    "sitegen": "wireit"
   },
   "wireit": {
     "install-deps": {
@@ -37,6 +38,13 @@
         "./sitegen/node_modules"
       ]
     },
+    "imgpipel": {
+      "dependencies": [
+        "install-deps",
+        "build-imgpipel"
+      ],
+      "command": "imgpipel/bin/run.js"
+    },
     "build-imgpipel": {
       "command": "cd imgpipel && pnpm run build",
       "dependencies": [
@@ -50,12 +58,19 @@
         "./imgpipel/dist"
       ]
     },
-    "process": {
+    "sitegen": {
+      "command": "cd sitegen && pnpm run build",
       "dependencies": [
-        "install-deps",
-        "build-imgpipel"
+        "install-sitegen"
       ],
-      "command": "imgpipel/bin/run.js"
+      "files": [
+        "./sitegen/src",
+        "./sitegen/public",
+        "./sitegen/tailwind.config.mjs"
+      ],
+      "output": [
+        "./sitegen/dist"
+      ]
     }
   },
   "devDependencies": {

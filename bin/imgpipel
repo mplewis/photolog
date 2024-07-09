@@ -1,0 +1,11 @@
+#!/bin/bash
+set -euxo pipefail
+
+WORKDIR="tmp"
+
+rm -rf "$WORKDIR"
+mkdir -p "$WORKDIR"
+
+pnpm run process -- process "$@" \
+	--out-dir "$WORKDIR/photos"\
+	--out-metadata "$WORKDIR/metadata.json"
