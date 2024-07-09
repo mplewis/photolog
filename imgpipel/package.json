@@ -1,0 +1,85 @@
+{
+  "name": "imgpipel",
+  "description": "A new CLI generated with oclif",
+  "version": "0.0.0",
+  "author": "Matt Lewis",
+  "bin": {
+    "imgpipel": "./bin/run.js"
+  },
+  "bugs": "https://github.com/mplewis/imgpipel/issues",
+  "dependencies": {
+    "@oclif/core": "^4",
+    "@oclif/plugin-help": "^6",
+    "@oclif/plugin-plugins": "^5",
+    "common-tags": "^1.8.2",
+    "deepmerge": "^4.3.1",
+    "glob": "^10.4.2",
+    "p-limit": "^4",
+    "pretty-bytes": "^6.1.1",
+    "progress": "^2.0.3",
+    "table": "^6.8.2",
+    "tmp-promise": "^3.0.3",
+    "zod": "^3.23.8",
+    "zx": "^8.1.2"
+  },
+  "devDependencies": {
+    "@oclif/prettier-config": "^0.2.1",
+    "@oclif/test": "^4",
+    "@types/chai": "^4",
+    "@types/common-tags": "^1.8.4",
+    "@types/mocha": "^10",
+    "@types/node": "^18",
+    "@types/progress": "^2.0.7",
+    "chai": "^4",
+    "eslint": "^8",
+    "eslint-config-oclif": "^5",
+    "eslint-config-oclif-typescript": "^3",
+    "eslint-config-prettier": "^9",
+    "mocha": "^10",
+    "oclif": "^4",
+    "shx": "^0.3.3",
+    "ts-node": "^10",
+    "typescript": "^5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "/bin",
+    "/dist",
+    "/oclif.manifest.json"
+  ],
+  "homepage": "https://github.com/mplewis/imgpipel",
+  "keywords": [
+    "oclif"
+  ],
+  "license": "MIT",
+  "main": "dist/index.js",
+  "type": "module",
+  "oclif": {
+    "bin": "imgpipel",
+    "dirname": "imgpipel",
+    "commands": "./dist/commands",
+    "plugins": [
+      "@oclif/plugin-help",
+      "@oclif/plugin-plugins"
+    ],
+    "topicSeparator": " ",
+    "topics": {
+      "hello": {
+        "description": "Say hello to the world and others"
+      }
+    }
+  },
+  "repository": "mplewis/imgpipel",
+  "scripts": {
+    "build": "shx rm -rf dist && tsc -b",
+    "lint": "eslint . --ext .ts",
+    "postpack": "shx rm -f oclif.manifest.json",
+    "posttest": "pnpm run lint",
+    "prepack": "oclif manifest && oclif readme",
+    "test": "mocha --forbid-only \"test/**/*.test.ts\"",
+    "version": "oclif readme && git add README.md"
+  },
+  "types": "dist/index.d.ts"
+}
