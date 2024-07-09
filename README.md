@@ -12,3 +12,4 @@ Static site generator for sharing your photos.
   processed children, rather than `original`/`processed` keys in the root
   metadata object.
 - Support root-level images with no album.
+- Update imgpipel from Mocha to Vitest.

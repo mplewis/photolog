@@ -19,57 +19,57 @@
       ]
     },
     "install-imgpipel": {
-      "command": "cd imgpipel && pnpm install",
+      "command": "cd src/imgpipel && pnpm install",
       "files": [
-        "./imgpipel/package.json",
-        "./imgpipel/package-lock.json"
+        "./src/imgpipel/package.json",
+        "./src/imgpipel/package-lock.json"
       ],
       "output": [
-        "./imgpipel/node_modules"
+        "./src/imgpipel/node_modules"
       ]
     },
     "install-sitegen": {
-      "command": "cd sitegen && pnpm install",
+      "command": "cd src/sitegen && pnpm install",
       "files": [
-        "./sitegen/package.json",
-        "./sitegen/package-lock.json"
+        "./src/sitegen/package.json",
+        "./src/sitegen/package-lock.json"
       ],
       "output": [
-        "./sitegen/node_modules"
+        "./src/sitegen/node_modules"
       ]
     },
     "imgpipel": {
+      "command": "src/imgpipel/bin/run.js",
       "dependencies": [
         "install-deps",
         "build-imgpipel"
-      ],
-      "command": "imgpipel/bin/run.js"
+      ]
     },
     "build-imgpipel": {
-      "command": "cd imgpipel && pnpm run build",
+      "command": "cd src/imgpipel && pnpm run build",
       "dependencies": [
         "install-imgpipel"
       ],
       "files": [
-        "./imgpipel/bin",
-        "./imgpipel/src"
+        "./src/imgpipel/bin",
+        "./src/imgpipel/src"
       ],
       "output": [
-        "./imgpipel/dist"
+        "./src/imgpipel/dist"
       ]
     },
     "sitegen": {
-      "command": "cd sitegen && pnpm run build",
+      "command": "cd src/sitegen && pnpm run build",
       "dependencies": [
         "install-sitegen"
       ],
       "files": [
-        "./sitegen/src",
-        "./sitegen/public",
-        "./sitegen/tailwind.config.mjs"
+        "./src/sitegen/src",
+        "./src/sitegen/public",
+        "./src/sitegen/tailwind.config.mjs"
       ],
       "output": [
-        "./sitegen/dist"
+        "./src/sitegen/dist"
       ]
     }
   },

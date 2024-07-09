@@ -6,6 +6,6 @@ WORKDIR="tmp"
 rm -rf "$WORKDIR"
 mkdir -p "$WORKDIR"
 
-pnpm run process -- process "$@" \
+pnpm run imgpipel -- process "$@" \
 	--out-dir "$WORKDIR/photos"\
 	--out-metadata "$WORKDIR/metadata.json"
