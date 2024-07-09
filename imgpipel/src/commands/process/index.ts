@@ -1,8 +1,8 @@
 import {Args, Command, Flags} from '@oclif/core'
 import {stripIndents} from 'common-tags'
 
-import {processMany} from '../../lib/process.js'
-import {Target, parseTarget} from '../../types/target.js'
+import {processMany} from '../../lib/process'
+import {Target, parseTarget} from '../../types/target'
 
 const description = 'Process large images using an asset pipeline to optimize them for web delivery.'
 

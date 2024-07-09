@@ -44,9 +44,6 @@ dependencies:
   tailwindcss:
     specifier: ^3.4.4
     version: 3.4.4
-  tex-linebreak:
-    specifier: ^0.7.1
-    version: 0.7.1
   typescript:
     specifier: ^5.4.5
     version: 5.4.5
@@ -3806,10 +3803,6 @@ packages:
       sucrase: 3.35.0
     transitivePeerDependencies:
       - ts-node
-    dev: false
-
-  /tex-linebreak@0.7.1:
-    resolution: {integrity: sha512-DioAcgbUGvacQSNJBcHoIUl2MnjWpNGz3R9tDX6gjtn/c+59ySW1dyFGMhIpl+u7sT+ywRwYAoAtk+wA5xUIsg==}
     dev: false
 
   /thenify-all@1.6.0:

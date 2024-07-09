@@ -6,6 +6,60 @@
   "license": "MIT",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "postinstall": "pnpm run install-deps",
+    "install-deps": "wireit",
+    "process": "wireit"
+  },
+  "wireit": {
+    "install-deps": {
+      "dependencies": [
+        "install-imgpipel",
+        "install-sitegen"
+      ]
+    },
+    "install-imgpipel": {
+      "command": "cd imgpipel && pnpm install",
+      "files": [
+        "./imgpipel/package.json",
+        "./imgpipel/package-lock.json"
+      ],
+      "output": [
+        "./imgpipel/node_modules"
+      ]
+    },
+    "install-sitegen": {
+      "command": "cd sitegen && pnpm install",
+      "files": [
+        "./sitegen/package.json",
+        "./sitegen/package-lock.json"
+      ],
+      "output": [
+        "./sitegen/node_modules"
+      ]
+    },
+    "build-imgpipel": {
+      "command": "cd imgpipel && pnpm run build",
+      "dependencies": [
+        "install-imgpipel"
+      ],
+      "files": [
+        "./imgpipel/bin",
+        "./imgpipel/src"
+      ],
+      "output": [
+        "./imgpipel/dist"
+      ]
+    },
+    "process": {
+      "dependencies": [
+        "install-deps",
+        "build-imgpipel"
+      ],
+      "command": "imgpipel/bin/run.js"
+    }
+  },
+  "devDependencies": {
+    "wireit": "^0.14.5",
+    "zx": "^8.1.4"
   }
 }

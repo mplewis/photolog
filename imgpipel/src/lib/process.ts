@@ -11,8 +11,8 @@ import {table} from 'table'
 import * as tmp from 'tmp-promise'
 import {$} from 'zx'
 
-import {Target} from '../types/target.js'
-import {Metadata, readMetadata} from './metadata.ts'
+import {Target} from '../types/target'
+import {Metadata, readMetadata} from './metadata'
 
 const imgExtensions = ['jpg', 'jpeg', 'png']
 
