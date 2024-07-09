@@ -1,0 +1,49 @@
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%2210 0 100 100%22><text y=%22.90em%22 font-size=%2290%22>📸</text></svg>"
+    />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+
+    <meta charset="UTF-8" /><meta
+      name="description"
+      content="Monstera Consulting builds software solutions that grow with your business."
+    />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://photolog.mplewis.com" />
+    <meta property="og:title" content="Photolog" />
+    <meta property="og:description" content="Photolog by Matt Lewis" />
+    <meta
+      property="og:image"
+      content="https://photolog.mplewis.com/open-graph.jpg"
+    />
+    <meta
+      property="og:image:alt"
+      content="Photolog logo over a background of a photograph"
+    />
+
+    <title>Photolog</title>
+  </head>
+
+  <body class="bg-white dark:bg-slate-800">
+    <div id="app">
+      <slot />
+    </div>
+  </body>
+</html>
+
+<style is:global>
+  @import url("https://fonts.googleapis.com/css2?family=Inconsolata&family=Playwrite+PL&display=swap");
+
+  * {
+    font-family: "Inconsolata", monospace;
+  }
+
+  .site-logo {
+    font-family: "Playwrite PL", sans-serif;
+  }
+</style>

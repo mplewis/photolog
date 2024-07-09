@@ -1,0 +1,66 @@
+---
+import MainLayout from "../layouts/MainLayout.astro";
+import App from "../components/App.tsx";
+import { metadataPackageSchema, type Photo } from "../types";
+import { albums, albumsByKey } from "../meta";
+import _metadata from "../../public/photos/metadata.json";
+import { describeMetadata } from "../logic/desc";
+
+const imageRoot = "/photos";
+const thumbnailMaxWidthPx = 800; // anything wider than this is a "full" image
+
+function parseAlbum(origUrl: string): string {
+  const a = origUrl.split("/")[0];
+  if (!a) throw new Error(`Could not parse album from ${origUrl}`);
+  if (!albumsByKey[a]) throw new Error(`Album metadata not found for ${a}`);
+  return a;
+}
+
+const parse = metadataPackageSchema.safeParse(_metadata);
+if (!parse.success) {
+  console.error(parse.error);
+  throw new Error(`Could not parse metadata: ${parse.error.message}`);
+}
+const metadata = parse.data;
+
+const originalToProcessed: Record<
+  string,
+  { url: string; width: number; height: number }[]
+> = {};
+for (const [proc, meta] of Object.entries(metadata.processed)) {
+  if (!originalToProcessed[meta.original])
+    originalToProcessed[meta.original] = [];
+  const data = { url: proc, width: meta.width, height: meta.height };
+  originalToProcessed[meta.original]!.push(data);
+}
+
+const photos: Photo[] = [];
+for (const [orig, meta] of Object.entries(metadata.original)) {
+  if (!meta.date) throw new Error(`Missing date for ${orig}`);
+  const processed = originalToProcessed[orig] ?? [];
+
+  const { title, description } = describeMetadata(meta);
+  const { date } = meta;
+  const albums = [parseAlbum(orig)];
+  const urls = processed.map(({ width, height, url }) => ({
+    width,
+    height,
+    url: `${imageRoot}/${url}`,
+    thumbnail: width <= thumbnailMaxWidthPx,
+  }));
+
+  photos.push({
+    title: title ?? null,
+    description,
+    date,
+    albums,
+    assets: urls,
+  });
+}
+
+photos.sort((a, b) => b.date.getTime() - a.date.getTime());
+---
+
+<MainLayout>
+  <App client:only albums={albums} photos={photos} />
+</MainLayout>
