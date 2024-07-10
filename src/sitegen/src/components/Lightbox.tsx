@@ -2,18 +2,13 @@ import YARL, { type SlideImage } from "yet-another-react-lightbox";
 import Captions from "yet-another-react-lightbox/plugins/captions";
 import Thumbnails from "yet-another-react-lightbox/plugins/thumbnails";
 
-import { YARL_THUMBNAIL_SUFFIX } from "../sizes";
 import type { Photo } from "../types";
+import { thumbnailMaxWidthPx } from "../sizes";
 
 import "yet-another-react-lightbox/styles.css";
 import "yet-another-react-lightbox/plugins/captions.css";
 import "yet-another-react-lightbox/plugins/thumbnails.css";
 import { useEffect } from "react";
-
-function filenameEndsWithUnhashedSuffix(filename: string, suffix: string) {
-  const filenameNoExt = filename.split(".").slice(0, -2).join("."); // -2 to remove the hash and the extension
-  return filenameNoExt.endsWith(suffix);
-}
 
 const styles = {
   captionsTitleContainer: {
@@ -64,24 +59,21 @@ const Lightbox = ({
 }) => {
   const slides: SlideImage[] = photos.map((photo) => {
     const fullSizes = photo.assets.filter((a) => !a.thumbnail);
-
+    if (fullSizes.length === 0) throw new Error("No full-size images found"); // assertion for compile-time check
     const srcSet = fullSizes.map(({ url, width, height }) => ({
       src: url,
       width,
       height,
     }));
-    const yarlThumbnail = photo.assets.find(
-      (a) =>
-        a.thumbnail &&
-        filenameEndsWithUnhashedSuffix(a.url, YARL_THUMBNAIL_SUFFIX)
+
+    const defaultThumbnail = photo.assets.reduce(
+      (acc, a) => (acc && acc.width > a.width ? acc : a),
+      photo.assets[0]
     );
-    if (!yarlThumbnail)
-      throw new Error(
-        `No YARL thumbnail found with suffix ${YARL_THUMBNAIL_SUFFIX}`
-      );
+    if (!defaultThumbnail) throw new Error("No default thumbnail found"); // assertion for compile-time check
 
     const { title, description } = photo;
-    const { url: src, width, height } = yarlThumbnail;
+    const { url: src, width, height } = defaultThumbnail;
     return { title, description, srcSet, src, width, height };
   });
 

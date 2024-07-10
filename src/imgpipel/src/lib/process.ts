@@ -269,7 +269,7 @@ async function saveMetadataReport({
   })
   for (const a of albums) delete a.order
   const albumNames = albums.map((a) => a.name).join(', ')
-  console.log([`Parsed metadata for ${pluralize(albums.length, 'albums')}`, albumNames].filter(Boolean).join(': '))
+  console.log([`Parsed metadata for ${pluralize(albums.length, 'album')}`, albumNames].filter(Boolean).join(': '))
 
   // Load original image metadata and start building report
   const results = await withProgress(inFiles.length, 'Reading original image metadata', async (bar) =>
@@ -291,8 +291,9 @@ async function saveMetadataReport({
   const report: MetadataReport = {albums, photos: {}}
   for (const [origInPath, metadata] of Object.entries(metadatas)) {
     if (!metadata.date) throw new Error(`Missing date for ${origInPath}`)
-    const item: ResizedMetadata = {...metadata, date: metadata.date, sizes: []}
     const inPath = path.relative(inDir, origInPath)
+    const albums = inPath.includes('/') ? [inPath.split('/')[0]] : []
+    const item: ResizedMetadata = {...metadata, albums, date: metadata.date, sizes: []}
     report.photos[inPath] = item
   }
 
@@ -327,10 +328,9 @@ async function saveMetadataReport({
   for (const proc of processedResults) {
     const {metadata, outPath: path} = proc
     const {height, original, width} = metadata
-    const albums = original.includes('/') ? [original.split('/')[0]] : []
     const item = report.photos[original]
     if (!item) throw new Error(`Missing original metadata for ${original} -> ${path}`)
-    item.sizes.push({albums, height, path, width})
+    item.sizes.push({height, path, width})
   }
 
   // List existing keys in original and processed metadata
@@ -347,15 +347,15 @@ async function saveMetadataReport({
   let toWrite = report
   try {
     const raw = await readFile(reportPath)
-    const parsed = JSON.parse(raw.toString())
+    const parsed = JSON.parse(raw.toString()) as MetadataReport
 
     const deleted: string[] = []
 
     // Delete keys that no longer exist
-    for (const [orig, _meta] of Object.entries(parsed) || []) {
+    for (const [orig, _meta] of Object.entries(parsed.photos) || []) {
       const meta = _meta as ResizedMetadata
       if (!keysOrig.has(orig)) {
-        delete parsed[orig]
+        delete parsed.photos[orig]
         deleted.push(orig)
       }
 
