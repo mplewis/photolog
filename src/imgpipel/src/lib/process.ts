@@ -115,20 +115,18 @@ export async function processMany(params: GlobalParams, targets: Target[]) {
   }
 
   // Process all images
-  const bar = new ProgressBar('Processing images [:bar] :current/:total :percent :etas', {total: processJobs.length})
-  const start = Date.now()
-
-  const processWip = processJobs.map(async (job) => {
-    const result = await pool(() => processOne(params, job))
-    bar.tick()
-    return result
+  const processResults = await withProgress(processJobs.length, 'Processing images', async (bar) => {
+    const processWip = processJobs.map(async (job) => {
+      const result = await pool(() => processOne(params, job))
+      bar.tick()
+      return result
+    })
+    return Promise.all(processWip)
   })
-  const processResults = await Promise.all(processWip)
-  let skips = ''
+
   const skipCount = processResults.filter((r) => r.skipped).length
-  if (skipCount > 0) skips = `(${skipCount} skipped) `
   const processCount = processResults.length - skipCount
-  console.log(`Processed ${processCount} images ${skips}in ${((Date.now() - start) / 1000).toFixed(1)}s`)
+  console.log(`(${processCount} processed, ${skipCount} skipped)`)
 
   // Build and save metadata report
   if (params.outMetadata) {
@@ -244,24 +242,20 @@ async function saveMetadataReport({
 }) {
   const pool = pLimit(os.cpus().length)
 
-  let bar = new ProgressBar('Reading original image metadata [:bar] :current/:total :percent :etas', {
-    total: inFiles.length,
+  withProgress(inFiles.length, 'Reading original image metadata', async (bar) => {
+    const metadataWip = inFiles.map(async (inPath) => {
+      const result = await pool(() => readMetadata(inPath))
+      bar.tick()
+      return result
+    })
+    const results = await Promise.all(metadataWip)
+    const metadatas: Record<string, Metadata> = {}
+    for (const [i, inPath] of inFiles.entries()) {
+      const result = results[i]
+      if (result.success) metadatas[inPath] = result.metadata
+      else console.error(`Failed to read metadata for ${inPath}: ${result.error}`)
+    }
   })
-  let start = Date.now()
-  const metadataWip = inFiles.map(async (inPath) => {
-    const result = await pool(() => readMetadata(inPath))
-    bar.tick()
-    return result
-  })
-  const results = await Promise.all(metadataWip)
-  const metadatas: Record<string, Metadata> = {}
-  for (const [i, inPath] of inFiles.entries()) {
-    const result = results[i]
-    if (result.success) metadatas[inPath] = result.metadata
-    else console.error(`Failed to read metadata for ${inPath}: ${result.error}`)
-  }
-
-  console.log(`Read metadata for ${inFiles.length} input files in ${((Date.now() - start) / 1000).toFixed(1)}s`)
 
   const report: MetadataReport = {}
   for (const [origInPath, metadata] of Object.entries(metadatas)) {
@@ -271,31 +265,32 @@ async function saveMetadataReport({
     report[inPath] = item
   }
 
-  bar = new ProgressBar('Reading processed image metadata [:bar] :current/:total :percent :etas', {
-    total: processResults.length,
-  })
-  start = Date.now()
-  const processedJobs = processResults.map(async (result) =>
-    pool(async () => {
-      const outMeta = await readMetadata(result.outPath)
-      if (!outMeta.success) throw new Error(`Failed to read metadata for ${result.outPath}: ${outMeta.error}`)
+  const processedResults = await withProgress(
+    processResults.length,
+    'Reading processed image metadata',
+    async (bar) => {
+      const processedJobs = processResults.map(async (result) =>
+        pool(async () => {
+          const outMeta = await readMetadata(result.outPath)
+          if (!outMeta.success) throw new Error(`Failed to read metadata for ${result.outPath}: ${outMeta.error}`)
 
-      const outPath = path.relative(outDir, result.outPath)
-      const inPath = path.relative(inDir, result.inPath)
+          const outPath = path.relative(outDir, result.outPath)
+          const inPath = path.relative(inDir, result.inPath)
 
-      bar.tick()
-      return {
-        metadata: {
-          height: outMeta.metadata.height,
-          original: inPath,
-          width: outMeta.metadata.width,
-        },
-        outPath,
-      }
-    }),
+          bar.tick()
+          return {
+            metadata: {
+              height: outMeta.metadata.height,
+              original: inPath,
+              width: outMeta.metadata.width,
+            },
+            outPath,
+          }
+        }),
+      )
+      return Promise.all(processedJobs)
+    },
   )
-  const processedResults = await Promise.all(processedJobs)
-  console.log(`Read metadata for ${processResults.length} output files in ${((Date.now() - start) / 1000).toFixed(1)}s`)
 
   const processed: Record<string, {height: number; original: string; width: number}> = {}
   for (const {metadata, outPath} of processedResults) processed[outPath] = metadata
