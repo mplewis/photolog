@@ -1,28 +1,7 @@
 import {z} from 'zod'
 import {$} from 'zx'
 
-/** date in local time as [year, month, day, hour, minute, second] */
-type LocalDate = readonly [number, number, number, number, number, number]
-
-/** Metadata gathered from an image. */
-export type Metadata = {
-  cameraMake?: string
-  cameraModel?: string
-  cameraProfile?: string
-  date?: Date
-  description?: string
-  exposureTime?: string
-  fNumber?: string
-  focalLength?: number
-  height: number
-  iso?: string
-  lensMake?: string
-  lensModel?: string
-  localDate?: LocalDate
-  location?: string
-  title?: string
-  width: number
-}
+import {LocalDate, Metadata} from '../common/types'
 
 /*
 Example exiftool output:

@@ -11,8 +11,10 @@ import {table} from 'table'
 import * as tmp from 'tmp-promise'
 import {$} from 'zx'
 
+import type {Metadata, MetadataReport, ResizedMetadata} from '../common/types'
+
 import {Target} from '../types/target'
-import {Metadata, readMetadata} from './metadata'
+import {readMetadata} from './metadata'
 
 const imgExtensions = ['jpg', 'jpeg', 'png']
 
@@ -55,12 +57,6 @@ type ProcessResult = {
 }
 
 type MetadataPlus = Metadata & Record<string, unknown>
-
-/** The metadata report generated with details on each image. */
-type MetadataReport = {
-  original: Record<string, MetadataPlus>
-  processed: Record<string, {height: number; original: string; width: number}>
-}
 
 async function withProgress<T>(total: number, desc: string, fn: (bar: ProgressBar) => Promise<T>): Promise<T> {
   const start = Date.now()
@@ -267,15 +263,13 @@ async function saveMetadataReport({
 
   console.log(`Read metadata for ${inFiles.length} input files in ${((Date.now() - start) / 1000).toFixed(1)}s`)
 
-  const report: MetadataReport = {original: {}, processed: {}}
-
-  const original: Record<string, MetadataPlus> = {}
+  const report: MetadataReport = {}
   for (const [origInPath, metadata] of Object.entries(metadatas)) {
+    if (!metadata.date) throw new Error(`Missing date for ${origInPath}`)
+    const item: ResizedMetadata = {...metadata, date: metadata.date, sizes: []}
     const inPath = path.relative(inDir, origInPath)
-    original[inPath] = metadata
+    report[inPath] = item
   }
-
-  report.original = original
 
   bar = new ProgressBar('Reading processed image metadata [:bar] :current/:total :percent :etas', {
     total: processResults.length,
