@@ -1,11 +1,13 @@
 ---
+import type { Photo } from "../types";
+import type { MetadataReport } from "../common/types";
 import MainLayout from "../layouts/MainLayout.astro";
 import App from "../components/App.tsx";
-import { metadataPackageSchema, type Photo } from "../types";
 import { albums, albumsByKey } from "../meta";
-import _metadata from "../../../tmp/metadata.json";
 import { describeMetadata } from "../logic/desc";
+import { readFile } from "fs/promises";
 
+const metadataPath = "../../tmp/metadata.json";
 const imageRoot = "/photos";
 const thumbnailMaxWidthPx = 800; // anything wider than this is a "full" image
 
@@ -16,36 +18,20 @@ function parseAlbum(origUrl: string): string {
   return a;
 }
 
-const parse = metadataPackageSchema.safeParse(_metadata);
-if (!parse.success) {
-  console.error(parse.error);
-  throw new Error(`Could not parse metadata: ${parse.error.message}`);
-}
-const metadata = parse.data;
-
-const originalToProcessed: Record<
-  string,
-  { url: string; width: number; height: number }[]
-> = {};
-for (const [proc, meta] of Object.entries(metadata.processed)) {
-  if (!originalToProcessed[meta.original])
-    originalToProcessed[meta.original] = [];
-  const data = { url: proc, width: meta.width, height: meta.height };
-  originalToProcessed[meta.original]!.push(data);
-}
+const raw = (await readFile(metadataPath)).toString();
+const metadata = JSON.parse(raw) as MetadataReport;
 
 const photos: Photo[] = [];
-for (const [orig, meta] of Object.entries(metadata.original)) {
-  if (!meta.date) throw new Error(`Missing date for ${orig}`);
-  const processed = originalToProcessed[orig] ?? [];
+for (const [orig, meta] of Object.entries(metadata)) {
+  const { sizes } = meta;
 
   const { title, description } = describeMetadata(meta);
   const { date } = meta;
   const albums = [parseAlbum(orig)];
-  const urls = processed.map(({ width, height, url }) => ({
+  const urls = sizes.map(({ width, height, path }) => ({
     width,
     height,
-    url: `${imageRoot}/${url}`,
+    url: `${imageRoot}/${path}`,
     thumbnail: width <= thumbnailMaxWidthPx,
   }));
 

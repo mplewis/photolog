@@ -59,7 +59,7 @@
       ]
     },
     "sitegen": {
-      "command": "cd src/sitegen && pnpm run build",
+      "command": "cd src/sitegen && (cd public && rm -rf photos && ln -s ../../../tmp/photos .) && pnpm run build",
       "dependencies": [
         "install-sitegen"
       ],
