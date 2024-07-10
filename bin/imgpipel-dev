@@ -1,0 +1,14 @@
+#!/bin/bash
+set -euxo pipefail
+
+WORKDIR="$(pwd)/tmp"
+
+rm -rf "$WORKDIR"
+mkdir -p "$WORKDIR"
+
+(
+	cd src/imgpipel
+	bin/dev.js process "$@" \
+		--out-dir "$WORKDIR/photos"\
+		--out-metadata "$WORKDIR/metadata.json"
+)

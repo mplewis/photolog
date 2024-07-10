@@ -56,8 +56,6 @@ type ProcessResult = {
   target: string
 }
 
-type MetadataPlus = Metadata & Record<string, unknown>
-
 async function withProgress<T>(total: number, desc: string, fn: (bar: ProgressBar) => Promise<T>): Promise<T> {
   const start = Date.now()
   const bar = new ProgressBar(`${desc} [:bar] :current/:total :percent :etas`, {total})
@@ -242,20 +240,21 @@ async function saveMetadataReport({
 }) {
   const pool = pLimit(os.cpus().length)
 
-  withProgress(inFiles.length, 'Reading original image metadata', async (bar) => {
-    const metadataWip = inFiles.map(async (inPath) => {
-      const result = await pool(() => readMetadata(inPath))
-      bar.tick()
-      return result
-    })
-    const results = await Promise.all(metadataWip)
-    const metadatas: Record<string, Metadata> = {}
-    for (const [i, inPath] of inFiles.entries()) {
-      const result = results[i]
-      if (result.success) metadatas[inPath] = result.metadata
-      else console.error(`Failed to read metadata for ${inPath}: ${result.error}`)
-    }
-  })
+  const results = await withProgress(inFiles.length, 'Reading original image metadata', async (bar) =>
+    Promise.all(
+      inFiles.map(async (inPath) => {
+        const result = await pool(() => readMetadata(inPath))
+        bar.tick()
+        return result
+      }),
+    ),
+  )
+  const metadatas: Record<string, Metadata> = {}
+  for (const [i, inPath] of inFiles.entries()) {
+    const result = results[i]
+    if (!result.success) throw new Error(`Failed to read metadata for ${inPath}: ${result.error}`)
+    metadatas[inPath] = result.metadata
+  }
 
   const report: MetadataReport = {}
   for (const [origInPath, metadata] of Object.entries(metadatas)) {
@@ -292,15 +291,24 @@ async function saveMetadataReport({
     },
   )
 
-  const processed: Record<string, {height: number; original: string; width: number}> = {}
-  for (const {metadata, outPath} of processedResults) processed[outPath] = metadata
-  report.processed = processed
+  for (const proc of processedResults) {
+    const {metadata, outPath: path} = proc
+    const {height, original, width} = metadata
+    const item = report[original]
+    if (!item) throw new Error(`Missing original metadata for ${original} -> ${path}`)
+    item.sizes.push({height, path, width})
+  }
 
   // List existing keys in original and processed metadata
   const keysOrig = new Set<string>()
   const keysProc = new Set<string>()
-  for (const key of Object.keys(report.original)) keysOrig.add(key)
-  for (const key of Object.keys(report.processed)) keysProc.add(key)
+
+  for (const [orig, meta] of Object.entries(report)) {
+    keysOrig.add(orig)
+    for (const size of meta.sizes) {
+      keysProc.add(size.path)
+    }
+  }
 
   let toWrite = report
   try {
@@ -310,17 +318,18 @@ async function saveMetadataReport({
     const deleted: string[] = []
 
     // Delete keys that no longer exist
-    for (const key of Object.keys(parsed.original) || []) {
-      if (!keysOrig.has(key)) {
-        deleted.push(key)
-        delete parsed.original[key]
+    for (const [orig, _meta] of Object.entries(parsed) || []) {
+      const meta = _meta as ResizedMetadata
+      if (!keysOrig.has(orig)) {
+        delete parsed[orig]
+        deleted.push(orig)
       }
-    }
 
-    for (const key of Object.keys(parsed.processed) || []) {
-      if (!keysProc.has(key)) {
-        deleted.push(key)
-        delete parsed.processed[key]
+      for (const size of meta.sizes || []) {
+        if (!keysProc.has(size.path)) {
+          meta.sizes = meta.sizes.filter((s) => s.path !== size.path)
+          deleted.push(size.path)
+        }
       }
     }
 
