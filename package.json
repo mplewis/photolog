@@ -9,7 +9,8 @@
     "postinstall": "pnpm run install-deps",
     "install-deps": "wireit",
     "imgpipel": "wireit",
-    "sitegen": "wireit"
+    "sitegen": "wireit",
+    "sitegen-dev": "wireit"
   },
   "wireit": {
     "install-deps": {
@@ -58,10 +59,24 @@
         "./src/imgpipel/dist"
       ]
     },
-    "sitegen": {
-      "command": "cd src/sitegen && (cd public && rm -rf photos && ln -s ../../../tmp/photos .) && pnpm run build",
+    "link-photos": {
+      "command": "cd src/sitegen/public && rm -rf photos && ln -s ../../../tmp/photos .",
       "dependencies": [
         "install-sitegen"
+      ]
+    },
+    "sitegen-dev": {
+      "command": "cd src/sitegen && pnpm run dev",
+      "dependencies": [
+        "install-sitegen",
+        "link-photos"
+      ]
+    },
+    "sitegen": {
+      "command": "cd src/sitegen && pnpm run build",
+      "dependencies": [
+        "install-sitegen",
+        "link-photos"
       ],
       "files": [
         "./src/sitegen/src",

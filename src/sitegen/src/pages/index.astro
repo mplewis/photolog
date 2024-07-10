@@ -3,7 +3,6 @@ import type { Photo } from "../types";
 import type { MetadataReport } from "../common/types";
 import MainLayout from "../layouts/MainLayout.astro";
 import App from "../components/App.tsx";
-import { albums, albumsByKey } from "../meta";
 import { describeMetadata } from "../logic/desc";
 import { readFile } from "fs/promises";
 
@@ -11,23 +10,15 @@ const metadataPath = "../../tmp/metadata.json";
 const imageRoot = "/photos";
 const thumbnailMaxWidthPx = 800; // anything wider than this is a "full" image
 
-function parseAlbum(origUrl: string): string {
-  const a = origUrl.split("/")[0];
-  if (!a) throw new Error(`Could not parse album from ${origUrl}`);
-  if (!albumsByKey[a]) throw new Error(`Album metadata not found for ${a}`);
-  return a;
-}
-
 const raw = (await readFile(metadataPath)).toString();
 const metadata = JSON.parse(raw) as MetadataReport;
 
 const photos: Photo[] = [];
-for (const [orig, meta] of Object.entries(metadata)) {
+for (const meta of Object.values(metadata.photos)) {
   const { sizes } = meta;
 
   const { title, description } = describeMetadata(meta);
-  const { date } = meta;
-  const albums = [parseAlbum(orig)];
+  const { date, albums } = meta;
   const urls = sizes.map(({ width, height, path }) => ({
     width,
     height,
@@ -48,5 +39,5 @@ photos.sort((a, b) => b.date.getTime() - a.date.getTime());
 ---
 
 <MainLayout>
-  <App client:only albums={albums} photos={photos} />
+  <App client:only albums={metadata.albums} photos={photos} />
 </MainLayout>

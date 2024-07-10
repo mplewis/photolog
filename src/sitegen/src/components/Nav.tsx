@@ -1,5 +1,5 @@
 import classNames from "classnames";
-import { type Album } from "../meta";
+import type { Album } from "../common/types";
 import { useState } from "react";
 
 const Nav = ({

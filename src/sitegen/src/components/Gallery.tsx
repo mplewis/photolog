@@ -3,7 +3,7 @@ import dayjs from "dayjs";
 
 import { screenSizes } from "../sizes";
 import type { Photo } from "../types";
-import type { Album } from "../meta";
+import type { Album } from "../common/types";
 
 type DateGrouping = {
   dateGroup: string; // "May 2024", "June 2022", etc.

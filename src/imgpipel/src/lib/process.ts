@@ -9,6 +9,8 @@ import prettyBytes from 'pretty-bytes'
 import ProgressBar from 'progress'
 import {table} from 'table'
 import * as tmp from 'tmp-promise'
+import {parse as yamlParse} from 'yaml'
+import {z} from 'zod'
 import {$} from 'zx'
 
 import type {Metadata, MetadataReport, ResizedMetadata} from '../common/types'
@@ -54,6 +56,16 @@ type ProcessResult = {
   ratio: number
   skipped: boolean
   target: string
+}
+
+const albumSchema = z.object({
+  desc: z.string(),
+  name: z.string(),
+  order: z.number().optional(),
+})
+
+function pluralize(count: number, noun: string): string {
+  return count === 1 ? noun : `${noun}s`
 }
 
 async function withProgress<T>(total: number, desc: string, fn: (bar: ProgressBar) => Promise<T>): Promise<T> {
@@ -240,6 +252,26 @@ async function saveMetadataReport({
 }) {
   const pool = pLimit(os.cpus().length)
 
+  // Load album metadata
+  const albumMetaPaths = await glob(path.join(inDir, '*', 'metadata.yaml'))
+  const albums = await Promise.all(
+    albumMetaPaths.map(async (metaPath) => {
+      const key = path.basename(path.dirname(metaPath))
+      const albumMeta = yamlParse((await readFile(metaPath)).toString())
+      return {key, ...albumSchema.parse(albumMeta)}
+    }),
+  )
+  albums.sort((a, b) => {
+    if (a.order && b.order) return a.order - b.order
+    if (a.order) return -1
+    if (b.order) return 1
+    return a.name.localeCompare(b.name)
+  })
+  for (const a of albums) delete a.order
+  const albumNames = albums.map((a) => a.name).join(', ')
+  console.log([`Parsed metadata for ${pluralize(albums.length, 'albums')}`, albumNames].filter(Boolean).join(': '))
+
+  // Load original image metadata and start building report
   const results = await withProgress(inFiles.length, 'Reading original image metadata', async (bar) =>
     Promise.all(
       inFiles.map(async (inPath) => {
@@ -256,14 +288,15 @@ async function saveMetadataReport({
     metadatas[inPath] = result.metadata
   }
 
-  const report: MetadataReport = {}
+  const report: MetadataReport = {albums, photos: {}}
   for (const [origInPath, metadata] of Object.entries(metadatas)) {
     if (!metadata.date) throw new Error(`Missing date for ${origInPath}`)
     const item: ResizedMetadata = {...metadata, date: metadata.date, sizes: []}
     const inPath = path.relative(inDir, origInPath)
-    report[inPath] = item
+    report.photos[inPath] = item
   }
 
+  // Read processed image metadata
   const processedResults = await withProgress(
     processResults.length,
     'Reading processed image metadata',
@@ -294,16 +327,17 @@ async function saveMetadataReport({
   for (const proc of processedResults) {
     const {metadata, outPath: path} = proc
     const {height, original, width} = metadata
-    const item = report[original]
+    const albums = original.includes('/') ? [original.split('/')[0]] : []
+    const item = report.photos[original]
     if (!item) throw new Error(`Missing original metadata for ${original} -> ${path}`)
-    item.sizes.push({height, path, width})
+    item.sizes.push({albums, height, path, width})
   }
 
   // List existing keys in original and processed metadata
   const keysOrig = new Set<string>()
   const keysProc = new Set<string>()
 
-  for (const [orig, meta] of Object.entries(report)) {
+  for (const [orig, meta] of Object.entries(report.photos)) {
     keysOrig.add(orig)
     for (const size of meta.sizes) {
       keysProc.add(size.path)

@@ -3,7 +3,6 @@ set -euxo pipefail
 
 WORKDIR="tmp"
 
-rm -rf "$WORKDIR"
 mkdir -p "$WORKDIR"
 
 pnpm run imgpipel -- process "$@" \

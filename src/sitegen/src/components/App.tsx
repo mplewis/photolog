@@ -4,7 +4,9 @@ import Nav from "./Nav";
 import Gallery from "./Gallery";
 import Lightbox from "./Lightbox";
 import type { Photo } from "../types";
-import type { Album } from "../meta";
+import type { Album } from "../common/types";
+
+type FlatAlbum = Album & { key: string };
 
 function useHash() {
   const [hash, _setHash] = useState(window.location.hash);
@@ -31,8 +33,8 @@ function useHash() {
   return [hash, setHash] as const;
 }
 
-const App = ({ albums, photos }: { albums: Album[]; photos: Photo[] }) => {
-  const [selectedAlbum, _setSelectedAlbum] = useState<Album | null>(null);
+const App = ({ albums, photos }: { albums: FlatAlbum[]; photos: Photo[] }) => {
+  const [selectedAlbum, _setSelectedAlbum] = useState<FlatAlbum | null>(null);
   const [selectedPhoto, setSelectedPhoto] = useState<number | null>(null);
   const [hash, setHash] = useHash();
   const [initialMount, setInitialMount] = useState(true);

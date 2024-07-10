@@ -3,7 +3,6 @@ set -euxo pipefail
 
 WORKDIR="$(pwd)/tmp"
 
-rm -rf "$WORKDIR"
 mkdir -p "$WORKDIR"
 
 (
