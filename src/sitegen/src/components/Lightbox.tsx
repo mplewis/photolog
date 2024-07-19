@@ -3,7 +3,6 @@ import Captions from "yet-another-react-lightbox/plugins/captions";
 import Thumbnails from "yet-another-react-lightbox/plugins/thumbnails";
 
 import type { Photo } from "../types";
-import { thumbnailMaxWidthPx } from "../sizes";
 
 import "yet-another-react-lightbox/styles.css";
 import "yet-another-react-lightbox/plugins/captions.css";
