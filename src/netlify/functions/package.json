@@ -1,0 +1,8 @@
+{
+  "name": "photolog-netlify-functions",
+  "version": "0.0.0",
+  "private": true,
+  "devDependencies": {
+    "vitest": "^2.1.8"
+  }
+}
