@@ -182,6 +182,29 @@ function parseCameraProfile(profile?: string): string | null {
   return (match && match[1]) ?? null;
 }
 
+/** Parse exposure values (exposure time, F stop, ISO) from metadata. */
+function parseExposure(m: Metadata): string[] {
+  const s: string[] = [];
+  if (m.exposureTime) s.push(`${m.exposureTime}s`);
+  if (m.fNumber) {
+    const fNum = parseFloat(m.fNumber);
+    if (fNum != IGNORE_F_AT) {
+      const match = lensSpecMatchesFNum(m.lensModel || "", fNum);
+      if (!match) s.push(`𝑓${m.fNumber}`);
+    }
+  }
+  if (m.iso) s.push(`ISO ${m.iso}`);
+  return s;
+}
+
+/** Parse a photo's locally-taken date from metadata. */
+function parseLocalDate(m: Metadata) {
+  if (!m.localDate) return undefined;
+  const [y, mo, d, h, mi, s] = m.localDate;
+  const parsed = dayjs(`${y}-${mo}-${d} ${h}:${mi}:${s}`);
+  return parsed.format("ddd MMM D HH:mm");
+}
+
 /** Summarize a set of camera metadata into a photo title and description. */
 export function describeMetadata(m: Metadata): {
   title?: string | undefined;
@@ -200,35 +223,15 @@ export function describeMetadata(m: Metadata): {
   if (lens && m.focalLength)
     lensAndFL = summarizeLensFocalLength(lens, m.focalLength);
 
-  // Summarize core settings
-  const s: string[] = [];
-  if (m.exposureTime) s.push(`${m.exposureTime}s`);
-  if (m.fNumber) {
-    const fNum = parseFloat(m.fNumber);
-    if (fNum != IGNORE_F_AT) {
-      const match = lensSpecMatchesFNum(lens, fNum);
-      if (!match) s.push(`𝑓${m.fNumber}`);
-    }
-  }
-  if (m.iso) s.push(`ISO ${m.iso}`);
-  const settings = s.join(", ");
   const profile = parseCameraProfile(m.cameraProfile);
-
-  // Format local date
-  let localDate: string | undefined;
-  if (m.localDate) {
-    const [y, mo, d, h, mi, s] = m.localDate;
-    const parsed = dayjs(`${y}-${mo}-${d} ${h}:${mi}:${s}`);
-    localDate = parsed.format("ddd MMM D HH:mm");
-  }
 
   // Combine details into desc chunks, then layout into lines
   const d: (string | null | undefined)[] = [
-    localDate,
+    parseLocalDate(m),
     m.location,
     camera,
     ...lensAndFL,
-    settings,
+    parseExposure(m).join(", "),
     profile && `Profile: ${profile}`,
   ];
   const dx = d.filter(Boolean) as string[];

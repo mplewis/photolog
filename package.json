@@ -10,7 +10,8 @@
     "install-deps": "wireit",
     "imgpipel": "wireit",
     "sitegen": "wireit",
-    "sitegen-dev": "wireit"
+    "sitegen-dev": "wireit",
+    "test": "wireit"
   },
   "wireit": {
     "install-deps": {
@@ -85,6 +86,12 @@
       ],
       "output": [
         "./src/sitegen/dist"
+      ]
+    },
+    "test": {
+      "command": "cd src/sitegen && pnpm vitest",
+      "dependencies": [
+        "install-sitegen"
       ]
     }
   },
