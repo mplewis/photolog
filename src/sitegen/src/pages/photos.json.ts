@@ -1,12 +1,15 @@
 import { readFile } from "fs/promises";
 import type { MetadataReport } from "../common/types";
-import dayjs, { type UnitType } from "dayjs";
-import shuffle from "knuth-shuffle-seeded";
-import { parseExposure, parseLocalDate } from "../logic/desc";
+import dayjs from "dayjs";
+import {
+  parseCameraAndLens,
+  parseExposure,
+  parseLocalDate,
+  summarizeLensFocalLength,
+} from "../logic/desc";
 
+const HOSTNAME = "https://photolog.mplewis.com";
 const metadataPath = "../../tmp/metadata.json";
-
-const NEW_PHOTO_EVERY: UnitType = "hour";
 
 function smush(items: (string | false | undefined)[], joiner = " ") {
   return items.filter(Boolean).join(joiner);
@@ -17,51 +20,57 @@ function line(sym: string, s: string | undefined) {
   return `${sym} ${s}`;
 }
 
+function describe(photo: PhotoData) {
+  const { title, description } = photo;
+  const { camera, lensAndFL } = parseCameraAndLens(photo);
+  const date = line("📅", parseLocalDate(photo));
+  const loc = line("📍", photo.location);
+  const cam = line("📷", camera);
+  const lens = line("🔎", smush(lensAndFL));
+  const exp = line("☀️", smush(parseExposure(photo), ", "));
+  const hashtags = [
+    "photolog",
+    camera?.toLowerCase().includes("fujifilm") && "fujifilm",
+    camera?.toLowerCase().includes("iphone") && "shotoniphone",
+  ]
+    .filter(Boolean)
+    .map((s) => `#${s}`)
+    .join(" ");
+
+  const lines = smush(
+    [title, description, loc, date, cam, lens, exp, hashtags],
+    "\n"
+  );
+
+  return lines;
+}
+
 const raw = (await readFile(metadataPath)).toString();
 const metadata = JSON.parse(raw) as MetadataReport;
 const photos = Object.entries(metadata.photos)
-  .map(([path, data]) => ({
-    ...data,
-    date: dayjs(data.date),
-    path,
-  }))
-  .sort((a, b) => {
-    return b.date.get("milliseconds") - a.date.get("milliseconds");
-  });
+  .map(([, data]) => {
+    const largest = data.sizes.reduce((largest, cand) =>
+      cand.width > largest.width ? cand : largest
+    );
+    return {
+      ...data,
+      date: dayjs(data.date),
+      url: `${HOSTNAME}/photos/${largest.path}`,
+    };
+  })
+  .sort((a, b) => (b.date.isBefore(a.date) ? -1 : 1));
+type PhotoData = (typeof photos)[0];
 
 const mostRecentPhoto = photos[0];
 if (!mostRecentPhoto) throw new Error("No photos found");
-const seed = dayjs().diff(mostRecentPhoto.date, NEW_PHOTO_EVERY);
-const shuffled = shuffle(photos, seed);
-const photo = shuffled[139];
-if (!photo) throw new Error("No photo selected");
-
-const { title, description } = photo;
-const date = line("📅", parseLocalDate(photo));
-const loc = line("📍", photo.location);
-const camera = line("📷", smush([photo.cameraMake, photo.cameraModel]));
-const lens = line("🔎", smush([photo.lensMake, photo.lensModel]));
-const exp = line("☀️", smush(parseExposure(photo), ", "));
-const hashtags = [
-  "photolog",
-  camera?.toLowerCase().includes("fujifilm") && "fujifilm",
-  camera?.toLowerCase().includes("iphone") && "shotoniphone",
-]
-  .filter(Boolean)
-  .map((s) => `#${s}`)
-  .join(" ");
-
-const lines = smush(
-  [title, description, loc, date, camera, lens, exp, hashtags],
-  "\n"
-);
-
-const { path } = photo.sizes.reduce((largest, cand) =>
-  cand.width > largest.width ? cand : largest
-);
+const { date: basisDate } = mostRecentPhoto;
+const described = photos.map((photo) => ({
+  desc: describe(photo),
+  url: photo.url,
+}));
 
 export async function GET() {
-  return new Response(JSON.stringify({ lines, path }), {
+  return new Response(JSON.stringify({ basisDate, photos: described }), {
     headers: { "Content-Type": "application/json" },
   });
 }

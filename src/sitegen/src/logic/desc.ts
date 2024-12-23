@@ -44,19 +44,19 @@ export function summarizeLensFocalLength(
   lens: string,
   focalLength: number
 ): string[] {
-  const combined = [lens, `${Math.round(focalLength)}mm`];
+  const lensAndFL = [lens, `${Math.round(focalLength)}mm`];
 
   // If the lens spec has a range, e.g. 16-80mm, always show focal length
-  if (lens.match(/\d+-\d+mm/)) return combined;
+  if (lens.match(/\d+-\d+mm/)) return lensAndFL;
 
   // Parse the prime focal length from the lens name
   const lensFLMatch = lens.match(/(\d+(.\d+)?)mm/);
-  if (!lensFLMatch || !lensFLMatch[1]) return combined;
+  if (!lensFLMatch || !lensFLMatch[1]) return lensAndFL;
   const parsedFocalLength = parseFloat(lensFLMatch[1]);
 
   // If the lens spec matches the actual focal length, omit it
   const match = Math.abs(parsedFocalLength - focalLength) < 1.0;
-  return match ? [lens] : combined;
+  return match ? [lens] : lensAndFL;
 }
 
 /** True if the lens spec contains the given focal length, false otherwise. */
@@ -175,6 +175,24 @@ export function chunksToLines(
   return lines;
 }
 
+/** Parse a camera and lens from metadata, removing redundant brand names and focal lengths. */
+export function parseCameraAndLens(
+  m: Pick<
+    Metadata,
+    "cameraMake" | "cameraModel" | "lensMake" | "lensModel" | "focalLength"
+  >
+) {
+  const camera = trimSp(`${m.cameraMake || ""} ${m.cameraModel || ""}`);
+  let lens = trimSp(`${m.lensMake || ""} ${m.lensModel || ""}`);
+  lens = trimCommonPrefixWords(camera, lens);
+  // TODO: Prettify all lens names by using regex replace for [Ff𝑓]/?\d+(.\d+)?
+  lens = lens.replaceAll("f/", "𝑓").replaceAll("F/", "𝑓");
+  let lensAndFL = [lens];
+  if (lens && m.focalLength)
+    lensAndFL = summarizeLensFocalLength(lens, m.focalLength);
+  return { camera, lensAndFL };
+}
+
 /** Parse a `Camera SOME PROFILE => SOME PROFILE` value from Fujifilm `CameraProfile` metadata. */
 function parseCameraProfile(profile?: string): string | null {
   if (!profile) return null;
@@ -214,17 +232,7 @@ export function describeMetadata(m: Metadata): {
 } {
   if (!m.date) throw new Error(`Missing date for ${JSON.stringify(m)}`);
 
-  const camera = trimSp(`${m.cameraMake || ""} ${m.cameraModel || ""}`);
-  let lens = trimSp(`${m.lensMake || ""} ${m.lensModel || ""}`);
-  lens = trimCommonPrefixWords(camera, lens);
-  // TODO: Prettify all lens names by using regex replace for [Ff𝑓]/?\d+(.\d+)?
-  lens = lens.replaceAll("f/", "𝑓").replaceAll("F/", "𝑓");
-
-  // Summarize lens and focal length
-  let lensAndFL = [lens];
-  if (lens && m.focalLength)
-    lensAndFL = summarizeLensFocalLength(lens, m.focalLength);
-
+  const { camera, lensAndFL } = parseCameraAndLens(m);
   const profile = parseCameraProfile(m.cameraProfile);
 
   // Combine details into desc chunks, then layout into lines
