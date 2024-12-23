@@ -68,8 +68,11 @@ const described = photos.map((photo) => ({
   url: photo.url,
 }));
 
+const data = { basisDate, photos: described };
+export type PhotosData = typeof data;
+
 export async function GET() {
-  return new Response(JSON.stringify({ basisDate, photos: described }), {
+  return new Response(JSON.stringify(data), {
     headers: { "Content-Type": "application/json" },
   });
 }
