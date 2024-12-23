@@ -1,3 +1,4 @@
+.env
 .wireit/
 node_modules/
 tmp/
