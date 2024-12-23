@@ -24,14 +24,18 @@ const UPLOAD_SIZE_LIMIT = 1_000_000; // Bluesky 1 MB limit
 const BSKY_USERNAME = env("BSKY_USERNAME");
 const BSKY_PASSWORD = env("BSKY_PASSWORD");
 
-async function selectURL(urls: string[]): Promise<string> {
-  for (const url of urls) {
-    const resp = await fetch(url, { method: "HEAD" });
-    const size = resp.headers.get("content-length");
-    if (size && parseInt(size) <= UPLOAD_SIZE_LIMIT) return url;
+async function selectURL(
+  sizes: { width: number; height: number; url: string }[]
+): Promise<{ width: number; height: number; url: string }> {
+  for (const size of sizes) {
+    const resp = await fetch(size.url, { method: "HEAD" });
+    const bytes = resp.headers.get("content-length");
+    if (bytes && parseInt(bytes) <= UPLOAD_SIZE_LIMIT) return size;
   }
+
+  const tried = sizes.map((s) => s.url).join(", ");
   throw new Error(
-    `No images were under the upload size limit. Tried: ${urls.join(", ")}`
+    `No images were under the upload size limit. Tried: ${tried}`
   );
 }
 
@@ -45,8 +49,9 @@ export default async () => {
   const shuffled = shuffle(photos, seed);
   const photo = shuffled[0];
 
-  const url = await selectURL(photo.urls);
-  const imgResp = await fetch(url);
+  const size = await selectURL(photo.sizes);
+  console.log(size);
+  const imgResp = await fetch(size.url);
   const imgAB = await imgResp.arrayBuffer();
   const imgU8 = new Uint8Array(imgAB);
   const imgUploadResp = await agent.uploadBlob(imgU8);
@@ -56,9 +61,14 @@ export default async () => {
   }
   console.log(imgUploadResp.data.blob);
 
+  const image = {
+    image: imgUploadResp.data.blob,
+    aspectRatio: { width: size.width, height: size.height },
+    alt: "",
+  };
   const embed: AppBskyEmbedImages.Main = {
     $type: "app.bsky.embed.images",
-    images: [{ image: imgUploadResp.data.blob, alt: "" }],
+    images: [image],
   };
 
   const rt = new RichText({ text: photo.desc });
@@ -78,5 +88,6 @@ export default async () => {
 };
 
 export const config: Config = {
-  schedule: "0 16 * * *", // 09:00 MST
+  // schedule: "0 16 * * *", // 09:00 MST
+  schedule: "* * * * *", // for testing
 };

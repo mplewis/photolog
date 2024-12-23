@@ -27,7 +27,11 @@ const fullPhotos = Object.entries(metadata.photos)
     return {
       ...data,
       date: dayjs(data.date),
-      urls: sizesLargestFirst.map((size) => `${HOSTNAME}/photos/${size.path}`),
+      sizes: sizesLargestFirst.map(({ width, height, path }) => ({
+        width,
+        height,
+        url: `${HOSTNAME}/photos/${path}`,
+      })),
     };
   })
   .sort((a, b) => (b.date.isBefore(a.date) ? -1 : 1));
@@ -37,7 +41,7 @@ if (!mostRecentPhoto) throw new Error("No photos found");
 const basisDate = mostRecentPhoto.date.toISOString();
 
 const photos = fullPhotos.map((photo) => {
-  const { title, description, urls } = photo;
+  const { title, description, sizes } = photo;
   const { camera, lensAndFL } = parseCameraAndLens(photo);
   const date = line("📅", parseLocalDate(photo));
   const loc = line("📍", photo.location);
@@ -58,7 +62,7 @@ const photos = fullPhotos.map((photo) => {
     "\n"
   );
 
-  return { desc, urls };
+  return { desc, sizes };
 });
 
 const data = { basisDate, photos };
