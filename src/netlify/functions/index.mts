@@ -78,6 +78,5 @@ export default async () => {
 };
 
 export const config: Config = {
-  // schedule: "0 16 * * *", // 09:00 MST
-  schedule: "* * * * *", // test: every minute
+  schedule: "0 16 * * *", // 09:00 MST
 };
