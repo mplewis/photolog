@@ -48,24 +48,21 @@ const raw = (await readFile(metadataPath)).toString();
 const metadata = JSON.parse(raw) as MetadataReport;
 const photos = Object.entries(metadata.photos)
   .map(([, data]) => {
-    const largest = data.sizes.reduce((largest, cand) =>
-      cand.width > largest.width ? cand : largest
-    );
+    const sizesLargestFirst = data.sizes.sort((a, b) => b.width - a.width);
     return {
       ...data,
       date: dayjs(data.date),
-      url: `${HOSTNAME}/photos/${largest.path}`,
+      urls: sizesLargestFirst.map((size) => `${HOSTNAME}/photos/${size.path}`),
     };
   })
   .sort((a, b) => (b.date.isBefore(a.date) ? -1 : 1));
-type PhotoData = (typeof photos)[0];
 
 const mostRecentPhoto = photos[0];
 if (!mostRecentPhoto) throw new Error("No photos found");
 const { date: basisDate } = mostRecentPhoto;
 const described = photos.map((photo) => ({
   desc: describe(photo),
-  url: photo.url,
+  urls: photo.urls,
 }));
 
 const data = { basisDate, photos: described };
