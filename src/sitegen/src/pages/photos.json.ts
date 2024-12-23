@@ -19,8 +19,25 @@ function line(sym: string, s: string | undefined) {
   return `${sym} ${s}`;
 }
 
-function describe(photo: PhotoData) {
-  const { title, description } = photo;
+const raw = (await readFile(metadataPath)).toString();
+const metadata = JSON.parse(raw) as MetadataReport;
+const fullPhotos = Object.entries(metadata.photos)
+  .map(([, data]) => {
+    const sizesLargestFirst = data.sizes.sort((a, b) => b.width - a.width);
+    return {
+      ...data,
+      date: dayjs(data.date),
+      urls: sizesLargestFirst.map((size) => `${HOSTNAME}/photos/${size.path}`),
+    };
+  })
+  .sort((a, b) => (b.date.isBefore(a.date) ? -1 : 1));
+
+const mostRecentPhoto = fullPhotos[0];
+if (!mostRecentPhoto) throw new Error("No photos found");
+const basisDate = mostRecentPhoto.date.toISOString();
+
+const photos = fullPhotos.map((photo) => {
+  const { title, description, urls } = photo;
   const { camera, lensAndFL } = parseCameraAndLens(photo);
   const date = line("📅", parseLocalDate(photo));
   const loc = line("📍", photo.location);
@@ -36,36 +53,15 @@ function describe(photo: PhotoData) {
     .map((s) => `#${s}`)
     .join(" ");
 
-  const lines = smush(
+  const desc = smush(
     [title, description, loc, date, cam, lens, exp, hashtags],
     "\n"
   );
 
-  return lines;
-}
+  return { desc, urls };
+});
 
-const raw = (await readFile(metadataPath)).toString();
-const metadata = JSON.parse(raw) as MetadataReport;
-const photos = Object.entries(metadata.photos)
-  .map(([, data]) => {
-    const sizesLargestFirst = data.sizes.sort((a, b) => b.width - a.width);
-    return {
-      ...data,
-      date: dayjs(data.date),
-      urls: sizesLargestFirst.map((size) => `${HOSTNAME}/photos/${size.path}`),
-    };
-  })
-  .sort((a, b) => (b.date.isBefore(a.date) ? -1 : 1));
-
-const mostRecentPhoto = photos[0];
-if (!mostRecentPhoto) throw new Error("No photos found");
-const { date: basisDate } = mostRecentPhoto;
-const described = photos.map((photo) => ({
-  desc: describe(photo),
-  urls: photo.urls,
-}));
-
-const data = { basisDate, photos: described };
+const data = { basisDate, photos };
 export type PhotosData = typeof data;
 
 export async function GET() {
