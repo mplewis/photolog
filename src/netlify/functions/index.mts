@@ -88,6 +88,6 @@ export default async () => {
 };
 
 export const config: Config = {
-  // schedule: "0 16 * * *", // 09:00 MST
-  schedule: "* * * * *", // for testing
+  schedule: "0 16 * * *", // 09:00 MST
+  // schedule: "* * * * *", // for testing
 };
