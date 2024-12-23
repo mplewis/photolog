@@ -5,7 +5,6 @@ import {
   parseCameraAndLens,
   parseExposure,
   parseLocalDate,
-  summarizeLensFocalLength,
 } from "../logic/desc";
 
 const HOSTNAME = "https://photolog.mplewis.com";

@@ -1,5 +1,5 @@
 import dayjs from "dayjs";
-import type { LocalDate, ResizedMetadata } from "../common/types";
+import type { ResizedMetadata } from "../common/types";
 
 const CAPTION_MAX_LEN = 40; // Fits within iPhone Mini screen width
 const IGNORE_F_AT = 1.0; // Fujifilm reports f/1.0 for non-electronic lenses
