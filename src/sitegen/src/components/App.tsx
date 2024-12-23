@@ -34,9 +34,6 @@ function useHash() {
 }
 
 const App = ({ albums, photos }: { albums: FlatAlbum[]; photos: Photo[] }) => {
-  console.log(albums);
-  console.log(photos);
-
   const [selectedAlbum, _setSelectedAlbum] = useState<FlatAlbum | null>(null);
   const [selectedPhoto, setSelectedPhoto] = useState<number | null>(null);
   const [hash, setHash] = useHash();

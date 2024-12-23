@@ -1,5 +1,5 @@
 import dayjs from "dayjs";
-import type { ResizedMetadata } from "../common/types";
+import type { LocalDate, ResizedMetadata } from "../common/types";
 
 const CAPTION_MAX_LEN = 40; // Fits within iPhone Mini screen width
 const IGNORE_F_AT = 1.0; // Fujifilm reports f/1.0 for non-electronic lenses
@@ -183,7 +183,9 @@ function parseCameraProfile(profile?: string): string | null {
 }
 
 /** Parse exposure values (exposure time, F stop, ISO) from metadata. */
-function parseExposure(m: Metadata): string[] {
+export function parseExposure(
+  m: Pick<Metadata, "exposureTime" | "fNumber" | "iso" | "lensModel">
+): string[] {
   const s: string[] = [];
   if (m.exposureTime) s.push(`${m.exposureTime}s`);
   if (m.fNumber) {
@@ -198,7 +200,7 @@ function parseExposure(m: Metadata): string[] {
 }
 
 /** Parse a photo's locally-taken date from metadata. */
-function parseLocalDate(m: Metadata) {
+export function parseLocalDate(m: Pick<Metadata, "localDate">) {
   if (!m.localDate) return undefined;
   const [y, mo, d, h, mi, s] = m.localDate;
   const parsed = dayjs(`${y}-${mo}-${d} ${h}:${mi}:${s}`);
