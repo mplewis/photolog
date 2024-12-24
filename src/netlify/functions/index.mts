@@ -51,6 +51,12 @@ export default async () => {
 
   const size = await selectURL(photo.sizes);
   console.log(size);
+
+  if (process.env.DRY_RUN) {
+    console.log("Dry run, skipping upload");
+    return new Response("Dry run, skipping upload");
+  }
+
   const imgResp = await fetch(size.url);
   const imgAB = await imgResp.arrayBuffer();
   const imgU8 = new Uint8Array(imgAB);
