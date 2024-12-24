@@ -29,9 +29,10 @@ const BSKY_PASSWORD = env("BSKY_PASSWORD");
 async function fetchImageData() {
   const resp = await fetch(DATA_SOURCE);
   const { basisDate, photos } = (await resp.json()) as PhotosData;
-  const seed = dayjs().diff(dayjs(basisDate), NEW_PHOTO_EVERY);
-  const shuffled = shuffle(photos, seed);
-  return shuffled[0];
+  const basisDateMs = new Date(basisDate).getTime();
+  const shuffled = shuffle(photos, basisDateMs);
+  const daysSince = dayjs().diff(dayjs(basisDate), NEW_PHOTO_EVERY);
+  return shuffled[daysSince % shuffled.length];
 }
 
 /** Select metadata for the largest image variant that is under the upload size limit. */
