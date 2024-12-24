@@ -19,8 +19,11 @@ function env(key: string): string {
 
 const ATP_SERVICE = "https://bsky.social";
 const DATA_SOURCE = "https://photolog.mplewis.com/photos.json";
-const NEW_PHOTO_EVERY: UnitType = "day";
-const UPLOAD_SIZE_LIMIT = 1_000_000; // Bluesky 1 MB limit
+const BSKY_UPLOAD_SIZE_LIMIT = 1_000_000; // 1 MB
+const NEW_PHOTO_INTERVAL: { count: number; unit: UnitType } = {
+  count: 6,
+  unit: "hours",
+};
 
 const BSKY_USERNAME = env("BSKY_USERNAME");
 const BSKY_PASSWORD = env("BSKY_PASSWORD");
@@ -31,8 +34,9 @@ async function fetchImageData() {
   const { basisDate, photos } = (await resp.json()) as PhotosData;
   const basisDateMs = new Date(basisDate).getTime();
   const shuffled = shuffle(photos, basisDateMs);
-  const daysSince = dayjs().diff(dayjs(basisDate), NEW_PHOTO_EVERY);
-  return shuffled[daysSince % shuffled.length];
+  const nSinceTotal = dayjs().diff(dayjs(basisDate), NEW_PHOTO_INTERVAL.unit);
+  const nSince = Math.floor(nSinceTotal / NEW_PHOTO_INTERVAL.count);
+  return shuffled[nSince % shuffled.length];
 }
 
 /** Select metadata for the largest image variant that is under the upload size limit. */
@@ -42,7 +46,7 @@ async function selectURL(
   for (const size of sizes) {
     const resp = await fetch(size.url, { method: "HEAD" });
     const bytes = resp.headers.get("content-length");
-    if (bytes && parseInt(bytes) <= UPLOAD_SIZE_LIMIT) return size;
+    if (bytes && parseInt(bytes) <= BSKY_UPLOAD_SIZE_LIMIT) return size;
   }
 
   const tried = sizes.map((s) => s.url).join(", ");
@@ -129,6 +133,6 @@ export default async () => {
 };
 
 export const config: Config = {
-  schedule: "0 16 * * *", // 09:00 MST
-  // schedule: "* * * * *", // for testing
+  schedule: "0 3,9,15,21 * * *", // MDT: 21:00, 03:00, 09:00, 15:00
+  // schedule: "* * * * *", // every minute, for testing
 };
