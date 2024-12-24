@@ -2,6 +2,7 @@ import {
   AppBskyEmbedImages,
   AppBskyFeedPost,
   AtpAgent,
+  BlobRef,
   RichText,
 } from "@atproto/api";
 import fetch from "node-fetch";
@@ -24,6 +25,14 @@ const UPLOAD_SIZE_LIMIT = 1_000_000; // Bluesky 1 MB limit
 const BSKY_USERNAME = env("BSKY_USERNAME");
 const BSKY_PASSWORD = env("BSKY_PASSWORD");
 
+async function fetchImageData() {
+  const resp = await fetch(DATA_SOURCE);
+  const { basisDate, photos } = (await resp.json()) as PhotosData;
+  const seed = dayjs().diff(dayjs(basisDate), NEW_PHOTO_EVERY);
+  const shuffled = shuffle(photos, seed);
+  return shuffled[0];
+}
+
 async function selectURL(
   sizes: { width: number; height: number; url: string }[]
 ): Promise<{ width: number; height: number; url: string }> {
@@ -39,16 +48,57 @@ async function selectURL(
   );
 }
 
+async function uploadImageFromURL(agent: AtpAgent, url: string) {
+  const srcResp = await fetch(url);
+  const imgAB = await srcResp.arrayBuffer();
+  const imgU8 = new Uint8Array(imgAB);
+
+  const dstResp = await agent.uploadBlob(imgU8);
+  if (!dstResp.success) {
+    console.log(dstResp);
+    throw new Error("Failed to upload image");
+  }
+  return dstResp;
+}
+
+function buildImageEmbed(
+  imgBlob: BlobRef,
+  width: number,
+  height: number
+): AppBskyEmbedImages.Main {
+  const image = {
+    image: imgBlob,
+    aspectRatio: { width, height },
+    alt: "",
+  };
+  return {
+    $type: "app.bsky.embed.images",
+    images: [image],
+  };
+}
+
+async function buildPost(
+  agent: AtpAgent,
+  rawText: string,
+  imageEmbed: AppBskyEmbedImages.Main
+): Promise<AppBskyFeedPost.Record> {
+  const rt = new RichText({ text: rawText });
+  await rt.detectFacets(agent);
+  const { text, facets } = rt;
+  return {
+    text,
+    facets,
+    $type: "app.bsky.feed.post",
+    createdAt: new Date().toISOString(),
+    embed: imageEmbed,
+  };
+}
+
 export default async () => {
   const agent = new AtpAgent({ service: ATP_SERVICE });
   await agent.login({ identifier: BSKY_USERNAME, password: BSKY_PASSWORD });
 
-  const resp = await fetch(DATA_SOURCE);
-  const { basisDate, photos } = (await resp.json()) as PhotosData;
-  const seed = dayjs().diff(dayjs(basisDate), NEW_PHOTO_EVERY);
-  const shuffled = shuffle(photos, seed);
-  const photo = shuffled[0];
-
+  const photo = await fetchImageData();
   const size = await selectURL(photo.sizes);
   console.log(size);
 
@@ -57,35 +107,14 @@ export default async () => {
     return new Response("Dry run, skipping upload");
   }
 
-  const imgResp = await fetch(size.url);
-  const imgAB = await imgResp.arrayBuffer();
-  const imgU8 = new Uint8Array(imgAB);
-  const imgUploadResp = await agent.uploadBlob(imgU8);
-  if (!imgUploadResp.success) {
-    console.log(imgUploadResp);
-    throw new Error("Failed to upload image");
-  }
+  const imgUploadResp = await uploadImageFromURL(agent, size.url);
   console.log(imgUploadResp.data.blob);
 
-  const image = {
-    image: imgUploadResp.data.blob,
-    aspectRatio: { width: size.width, height: size.height },
-    alt: "",
-  };
-  const embed: AppBskyEmbedImages.Main = {
-    $type: "app.bsky.embed.images",
-    images: [image],
-  };
-
-  const rt = new RichText({ text: photo.desc });
-  await rt.detectFacets(agent);
-  const record: AppBskyFeedPost.Record = {
-    $type: "app.bsky.feed.post",
-    createdAt: new Date().toISOString(),
-    text: rt.text,
-    facets: rt.facets,
-    embed,
-  };
+  const record = await buildPost(
+    agent,
+    photo.desc,
+    buildImageEmbed(imgUploadResp.data.blob, size.width, size.height)
+  );
   console.log(record);
 
   const postResp = await agent.post(record);
