@@ -25,6 +25,7 @@ const UPLOAD_SIZE_LIMIT = 1_000_000; // Bluesky 1 MB limit
 const BSKY_USERNAME = env("BSKY_USERNAME");
 const BSKY_PASSWORD = env("BSKY_PASSWORD");
 
+/** Fetch data for a selected image from Photolog. */
 async function fetchImageData() {
   const resp = await fetch(DATA_SOURCE);
   const { basisDate, photos } = (await resp.json()) as PhotosData;
@@ -33,6 +34,7 @@ async function fetchImageData() {
   return shuffled[0];
 }
 
+/** Select metadata for the largest image variant that is under the upload size limit. */
 async function selectURL(
   sizes: { width: number; height: number; url: string }[]
 ): Promise<{ width: number; height: number; url: string }> {
@@ -48,6 +50,7 @@ async function selectURL(
   );
 }
 
+/** Upload an image from a URL to Bluesky. */
 async function uploadImageFromURL(agent: AtpAgent, url: string) {
   const srcResp = await fetch(url);
   const imgAB = await srcResp.arrayBuffer();
@@ -58,9 +61,10 @@ async function uploadImageFromURL(agent: AtpAgent, url: string) {
     console.log(dstResp);
     throw new Error("Failed to upload image");
   }
-  return dstResp;
+  return dstResp.data.blob;
 }
 
+/** Build the embed data for an image. */
 function buildImageEmbed(
   imgBlob: BlobRef,
   width: number,
@@ -77,6 +81,7 @@ function buildImageEmbed(
   };
 }
 
+/** Build the post data for an image. */
 async function buildPost(
   agent: AtpAgent,
   rawText: string,
@@ -107,17 +112,17 @@ export default async () => {
     return new Response("Dry run, skipping upload");
   }
 
-  const imgUploadResp = await uploadImageFromURL(agent, size.url);
-  console.log(imgUploadResp.data.blob);
+  const blob = await uploadImageFromURL(agent, size.url);
+  console.log(blob);
 
-  const record = await buildPost(
+  const postData = await buildPost(
     agent,
     photo.desc,
-    buildImageEmbed(imgUploadResp.data.blob, size.width, size.height)
+    buildImageEmbed(blob, size.width, size.height)
   );
-  console.log(record);
+  console.log(postData);
 
-  const postResp = await agent.post(record);
+  const postResp = await agent.post(postData);
   console.log(postResp);
   return new Response("OK");
 };
