@@ -222,7 +222,7 @@ export function parseLocalDate(m: Pick<Metadata, "localDate">) {
   if (!m.localDate) return undefined;
   const [y, mo, d, h, mi, s] = m.localDate;
   const parsed = dayjs(`${y}-${mo}-${d} ${h}:${mi}:${s}`);
-  return parsed.format("ddd MMM D HH:mm");
+  return parsed.format("ddd, MMM D, YYYY @ HH:mm");
 }
 
 /** Summarize a set of camera metadata into a photo title and description. */
