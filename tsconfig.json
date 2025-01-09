@@ -1,5 +1,6 @@
 {
   "extends": "astro/tsconfigs/strictest",
+  "include": ["src", "netlify"],
   "compilerOptions": {
     "strict": true,
     "target": "ESNext",

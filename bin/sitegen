@@ -1,9 +1,0 @@
-#!/bin/bash
-set -euxo pipefail
-
-OUT_DIR=tmp/dist
-
-pnpm run sitegen
-rm -rf $OUT_DIR
-mv src/sitegen/dist $OUT_DIR
-find $OUT_DIR -name ".DS_Store" -delete

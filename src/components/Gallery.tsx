@@ -2,7 +2,7 @@ import classNames from "classnames";
 import dayjs from "dayjs";
 
 import { SCREEN_SIZES } from "../sizes";
-import type { Album } from "../common/types";
+import type { Album } from "../logic/process";
 
 export interface GalleryPhoto {
   path: string;
@@ -49,12 +49,6 @@ const Gallery = ({
 
   let runningIndex = 0;
 
-  const gridClassNames = classNames(
-    "grid",
-    "grid-cols-3",
-    ...[SCREEN_SIZES.map(({ size, columns }) => `${size}:grid-cols-${columns}`)]
-  );
-
   return (
     <div className="pt-[6rem]">
       {selectedAlbum && (
@@ -73,7 +67,7 @@ const Gallery = ({
             {dateGroup}
           </h1>
 
-          <div className={gridClassNames}>
+          <div className="grid grid-cols-3 s3:grid-cols-3 s4:grid-cols-4 s5:grid-cols-5 s6:grid-cols-6 s7:grid-cols-7 s8:grid-cols-8 s9:grid-cols-9 s10:grid-cols-10 s11:grid-cols-11 s12:grid-cols-12">
             {photos.map((photo) => {
               if (photo.sizes.length === 0)
                 throw new Error(`No sizes found for photo: ${photo.path}`);

@@ -7,9 +7,9 @@ import {
 } from "@atproto/api";
 import fetch from "node-fetch";
 import shuffle from "knuth-shuffle-seeded";
-import dayjs, { UnitType } from "dayjs";
+import dayjs, { type UnitType } from "dayjs";
 import type { Config } from "@netlify/functions";
-import type { PhotosData } from "../../sitegen/src/pages/photos.json.ts";
+import type { PhotosData } from "../../src/pages/photos.json.ts";
 
 function env(key: string): string {
   const value = process.env[key];
@@ -36,7 +36,9 @@ async function fetchImageData() {
   const shuffled = shuffle(photos, basisDateMs);
   const nSinceTotal = dayjs().diff(dayjs(basisDate), NEW_PHOTO_INTERVAL.unit);
   const nSince = Math.floor(nSinceTotal / NEW_PHOTO_INTERVAL.count);
-  return shuffled[nSince % shuffled.length];
+  const photo = shuffled[nSince % shuffled.length];
+  if (!photo) throw new Error("No photos found");
+  return photo;
 }
 
 /** Select metadata for the largest image variant that is under the upload size limit. */
@@ -97,7 +99,7 @@ async function buildPost(
   const { text, facets } = rt;
   return {
     text,
-    facets,
+    facets: facets ?? [],
     $type: "app.bsky.feed.post",
     createdAt: new Date().toISOString(),
     embed: imageEmbed,

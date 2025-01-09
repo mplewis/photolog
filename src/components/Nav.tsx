@@ -1,6 +1,6 @@
 import classNames from "classnames";
-import type { Album } from "../common/types";
 import { useState } from "react";
+import type { Album } from "../logic/process";
 
 const Nav = ({
   albums,

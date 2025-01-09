@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import Nav from "./Nav";
 import Gallery, { type GalleryPhoto } from "./Gallery";
 import Lightbox, { type LightboxPhoto } from "./Lightbox";
-import type { FlatAlbum } from "../logic/process";
+import type { Album } from "../logic/process";
 
 export interface RenderedPhoto extends GalleryPhoto, LightboxPhoto {
   album: string | undefined;
@@ -38,10 +38,10 @@ const App = ({
   albums,
   photos,
 }: {
-  albums: FlatAlbum[];
+  albums: Album[];
   photos: RenderedPhoto[];
 }) => {
-  const [selectedAlbum, _setSelectedAlbum] = useState<FlatAlbum | null>(null);
+  const [selectedAlbum, _setSelectedAlbum] = useState<Album | null>(null);
   const [selectedPhoto, setSelectedPhoto] = useState<number | null>(null);
   const [hash, setHash] = useHash();
   const [initialMount, setInitialMount] = useState(true);

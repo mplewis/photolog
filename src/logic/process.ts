@@ -10,7 +10,6 @@ import { z } from "zod";
 import { readFile, unlink } from "fs/promises";
 import { parse as yamlParse } from "yaml";
 import { optimizeImage } from "./optimize";
-import type { Album } from "../common/types";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -23,9 +22,7 @@ const FILE_HASH_LEN = 8;
 /** Jpegli max butteraugli distance. Lower value = higher quality. 1.0 = visually lossless. */
 const QUALITY_BUTTERAUGLI = 1.0;
 
-export type FlatAlbum = Album & { key: string };
-
-export type NewPhoto = {
+export type Photo = {
   path: string;
   album: string | undefined;
   metadata: Metadata;
@@ -43,6 +40,7 @@ const albumMetadataSchema = z.object({
   order: z.number(),
 });
 export type AlbumMetadata = z.infer<typeof albumMetadataSchema>;
+export type Album = { key: string } & AlbumMetadata;
 
 function mustEnv(key: string): string {
   const value = import.meta.env[key];
@@ -110,8 +108,8 @@ async function _process(
   | {
       cacheFresh: false;
       inputFilesHash: string;
-      albums: FlatAlbum[];
-      photos: NewPhoto[];
+      albums: Album[];
+      photos: Photo[];
     }
 > {
   const paths = glob
@@ -222,8 +220,8 @@ export class ImagePipeline {
   cached:
     | {
         inputFilesHash: string;
-        albums: FlatAlbum[];
-        photos: NewPhoto[];
+        albums: Album[];
+        photos: Photo[];
       }
     | undefined;
 
@@ -234,8 +232,8 @@ export class ImagePipeline {
   }
 
   async process(): Promise<{
-    albums: FlatAlbum[];
-    photos: NewPhoto[];
+    albums: Album[];
+    photos: Photo[];
   }> {
     const result = await _process(
       this.publicPathPrefix,
