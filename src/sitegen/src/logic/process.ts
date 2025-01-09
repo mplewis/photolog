@@ -91,7 +91,7 @@ async function _process(
     })
   );
 
-  const photos = withHashes.map((p) => ({
+  const withSizes = withHashes.map((p) => ({
     ...p,
     sizes: screenSizes.map(({ width }) => {
       const name = `${p.hash}-${width}.jpg`;
@@ -103,14 +103,19 @@ async function _process(
     }),
   }));
 
+  const albums = await discoverAlbums(srcDir);
+
+  const photos = withSizes.map((p) => ({
+    ...p,
+    album: Object.keys(albums).find((a) => p.path.startsWith(`${a}/`)),
+  }));
+
   // TODO: Delete all extraneous files in this dir
   const allDstPaths = photos.map((p) => p.sizes.map((s) => s.absPath)).flat();
 
-  const albums = await discoverAlbums(srcDir);
-
   console.dir(
     {
-      // photos,
+      photos,
       albums,
       inputFilesHash,
       srcDir,
