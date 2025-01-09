@@ -3,10 +3,7 @@ import { useEffect, useState } from "react";
 import Nav from "./Nav";
 import Gallery from "./Gallery";
 import Lightbox from "./Lightbox";
-import type { Photo } from "../types";
-import type { Album } from "../common/types";
-
-type FlatAlbum = Album & { key: string };
+import type { FlatAlbum, NewPhoto } from "../logic/process";
 
 function useHash() {
   const [hash, _setHash] = useState(window.location.hash);
@@ -33,7 +30,13 @@ function useHash() {
   return [hash, setHash] as const;
 }
 
-const App = ({ albums, photos }: { albums: FlatAlbum[]; photos: Photo[] }) => {
+const App = ({
+  albums,
+  photos,
+}: {
+  albums: FlatAlbum[];
+  photos: NewPhoto[];
+}) => {
   const [selectedAlbum, _setSelectedAlbum] = useState<FlatAlbum | null>(null);
   const [selectedPhoto, setSelectedPhoto] = useState<number | null>(null);
   const [hash, setHash] = useHash();
@@ -111,7 +114,7 @@ const App = ({ albums, photos }: { albums: FlatAlbum[]; photos: Photo[] }) => {
   useEffect(() => setInitialMount(false), []);
 
   const photosForAlbum = selectedAlbum
-    ? photos.filter((p) => p.albums.includes(selectedAlbum.key))
+    ? photos.filter((p) => p.album === selectedAlbum.key)
     : photos;
 
   return (

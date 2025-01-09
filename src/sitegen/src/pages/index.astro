@@ -1,18 +1,11 @@
 ---
 import { imagePipeline } from "../logic/process";
-import type { MetadataReport } from "../common/types";
 import MainLayout from "../layouts/MainLayout.astro";
 import App from "../components/App.tsx";
-import { readFile } from "fs/promises";
 
-const metadataPath = "../../tmp/metadata.json";
-
-const raw = (await readFile(metadataPath)).toString();
-const metadata = JSON.parse(raw) as MetadataReport;
-
-await imagePipeline.process();
+const { albums, photos } = await imagePipeline.process();
 ---
 
 <MainLayout>
-  <App client:only albums={metadata.albums} photos={[]} />
+  <App client:only albums={albums} photos={photos} />
 </MainLayout>

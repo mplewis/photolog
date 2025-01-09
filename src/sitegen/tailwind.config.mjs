@@ -1,6 +1,6 @@
-import { screenSizes } from "./src/sizes";
+import { SCREEN_SIZES } from "./src/sizes";
 
-const s5 = screenSizes.find(({ size }) => size === "s5");
+const s5 = SCREEN_SIZES.find(({ size }) => size === "s5");
 
 /** @type {import('tailwindcss').Config} */
 export default {
@@ -10,7 +10,7 @@ export default {
     screens: {
       desktop: `${s5.width}px`,
       ...Object.fromEntries(
-        screenSizes.map(({ size, width }) => [size, `${width}px`])
+        SCREEN_SIZES.map(({ size, width }) => [size, `${width}px`])
       ),
     },
   },

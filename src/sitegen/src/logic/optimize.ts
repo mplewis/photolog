@@ -4,6 +4,7 @@ import * as tmp from "tmp-promise";
 import { $ } from "zx";
 import prettyBytes from "pretty-bytes";
 import { existsSync } from "fs";
+import { readMetadata } from "./metadata";
 
 export type TargetSize =
   | { maxWidth: number }
@@ -77,11 +78,15 @@ export async function optimizeImage(args: OptimizeImageArgs) {
   const inBytes = (await stat(src)).size;
   const outBytes = (await stat(dst)).size;
 
+  const metadata = await readMetadata(dst);
+  const { width, height } = metadata;
+
   return {
     inBytes,
     outBytes,
     elapsed,
     skipped,
+    dimensions: { width, height },
     outSize: prettyBytes(outBytes),
     ratio: outBytes / inBytes,
   };

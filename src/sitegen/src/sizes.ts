@@ -1,6 +1,6 @@
-export const thumbnailMaxWidthPx = 800; // anything wider than this is a "full" image
+export const THUMBNAIL_MAX_WIDTH_PX = 800; // anything wider than this is a "full" image
 
-export const screenSizes = [
+export const SCREEN_SIZES = [
   { size: "s3", width: 450, columns: 3 },
   { size: "s4", width: 600, columns: 4 },
   { size: "s5", width: 750, columns: 5 },

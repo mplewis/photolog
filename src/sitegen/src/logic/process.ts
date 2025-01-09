@@ -3,19 +3,19 @@ import { join, relative, resolve } from "path";
 import { fastHashFiles, hashFileContents } from "./hash";
 import { readMetadata, type Metadata } from "./metadata";
 import { runConc } from "./conc";
-import { screenSizes } from "../sizes";
+import { SCREEN_SIZES, THUMBNAIL_MAX_WIDTH_PX } from "../sizes";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 import { z } from "zod";
 import { readFile, unlink } from "fs/promises";
 import { parse as yamlParse } from "yaml";
 import { optimizeImage } from "./optimize";
+import type { Album } from "../common/types";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const PROJECT_ROOT = join(__dirname, "..", "..");
 const PUBLIC_DIR = join(PROJECT_ROOT, "public");
-console.log({ PUBLIC_DIR });
 
 /** Length of hashes for filenames. Used to name content-addressed output JPG files. */
 const FILE_HASH_LEN = 8;
@@ -23,10 +23,18 @@ const FILE_HASH_LEN = 8;
 /** Jpegli max butteraugli distance. Lower value = higher quality. 1.0 = visually lossless. */
 const QUALITY_BUTTERAUGLI = 1.0;
 
-type NewPhoto = {
+export type FlatAlbum = Album & { key: string };
+
+export type NewPhoto = {
   path: string;
-  absPath: string;
+  album: string | undefined;
   metadata: Metadata;
+  sizes: {
+    width: number;
+    height: number;
+    publicPath: string;
+    thumbnail: boolean;
+  }[];
 };
 
 const albumMetadataSchema = z.object({
@@ -38,9 +46,7 @@ export type AlbumMetadata = z.infer<typeof albumMetadataSchema>;
 
 function mustEnv(key: string): string {
   const value = import.meta.env[key];
-  if (!value) {
-    throw new Error(`Missing environment variable: ${key}`);
-  }
+  if (!value) throw new Error(`Missing environment variable: ${key}`);
   return value;
 }
 
@@ -48,7 +54,6 @@ async function discoverAlbums(
   srcDir: string
 ): Promise<Record<string, AlbumMetadata>> {
   const metadataPaths = await glob(join(srcDir, "*", "metadata.yaml"));
-  console.log(metadataPaths);
   const items = await runConc(
     "Read album metadata",
     metadataPaths.map((p) => async () => {
@@ -102,7 +107,12 @@ async function _process(
   lastHash: string | null
 ): Promise<
   | { cacheFresh: true }
-  | { cacheFresh: false; inputFilesHash: string; photos: NewPhoto[] }
+  | {
+      cacheFresh: false;
+      inputFilesHash: string;
+      albums: FlatAlbum[];
+      photos: NewPhoto[];
+    }
 > {
   const paths = glob
     .sync(join(srcDir, "**", "*.jpg"))
@@ -129,26 +139,33 @@ async function _process(
     })
   );
 
+  // Add desired screen sizes to all images
   const withSizes = withHashes.map((p) => ({
     ...p,
-    sizes: screenSizes.map(({ width }) => {
+    sizes: SCREEN_SIZES.map(({ width }) => {
       const name = `${p.hash}-${width}.jpg`;
       return {
-        width,
+        maxWidth: width,
         absPath: join(dstDir, name),
         publicPath: `/${publicPathPrefix}/${name}`,
+        thumbnail: width <= THUMBNAIL_MAX_WIDTH_PX,
       };
     }),
   }));
 
+  // Parse album metadata and categorize images by album
   const albums = await discoverAlbums(srcDir);
-
-  const photos = withSizes.map((p) => ({
+  const flatAlbums = Object.entries(albums).map(([key, value]) => ({
+    key,
+    ...value,
+  }));
+  const withAlbum = withSizes.map((p) => ({
     ...p,
     album: Object.keys(albums).find((a) => p.path.startsWith(`${a}/`)),
   }));
 
-  const jobsArgs = photos
+  // Build jobs for resizing and optimizing images
+  const jobsArgs = withAlbum
     .map((p) =>
       p.sizes.map((s) => ({
         src: p.path,
@@ -156,7 +173,7 @@ async function _process(
         args: {
           src: p.absPath,
           dst: s.absPath,
-          targetSize: { maxWidth: s.width },
+          targetSize: { maxWidth: s.maxWidth },
           qualityButteraugli: QUALITY_BUTTERAUGLI,
         },
       }))
@@ -172,18 +189,32 @@ async function _process(
   );
   printOptimReport(optimResults);
 
+  // Add real dimensions to resized images
+  const publicPathToDims = Object.fromEntries(
+    optimResults.map((r) => [r.dst, r.result.dimensions])
+  );
+  const photos = withAlbum.map((p) => ({
+    ...p,
+    sizes: p.sizes.map((s) => {
+      const dims = publicPathToDims[s.publicPath];
+      if (!dims) throw new Error(`No dimensions found for ${s.publicPath}`);
+      return { ...s, ...dims };
+    }),
+  }));
+
   const desiredFiles = photos.map((p) => p.sizes.map((s) => s.absPath)).flat();
   deleteExtraneous(dstDir, desiredFiles);
 
-  console.dir(
-    {
-      inputFilesHash,
-      srcDir,
-      dstDir,
-    },
-    { depth: null }
-  );
-  return { cacheFresh: false, inputFilesHash, photos };
+  // Sort photos by date descending
+  photos.sort((a, b) => {
+    if (!a.metadata.date) return -1;
+    if (!b.metadata.date) return 1;
+    if (a.metadata.date < b.metadata.date) return 1;
+    if (a.metadata.date > b.metadata.date) return -1;
+    return 0;
+  });
+
+  return { cacheFresh: false, inputFilesHash, photos, albums: flatAlbums };
 }
 
 export class ImagePipeline {
@@ -193,6 +224,7 @@ export class ImagePipeline {
   cached:
     | {
         inputFilesHash: string;
+        albums: FlatAlbum[];
         photos: NewPhoto[];
       }
     | undefined;
@@ -203,7 +235,10 @@ export class ImagePipeline {
     this.dstDir = resolve(join(PUBLIC_DIR, this.publicPathPrefix));
   }
 
-  async process(): Promise<NewPhoto[]> {
+  async process(): Promise<{
+    albums: FlatAlbum[];
+    photos: NewPhoto[];
+  }> {
     const result = await _process(
       this.publicPathPrefix,
       this.srcDir,
@@ -214,11 +249,11 @@ export class ImagePipeline {
       if (!this.cached)
         throw new Error("Cache evaluated as fresh but no cached data found!");
       console.log("Cache is fresh, skipping processing");
-      return this.cached.photos;
+      return this.cached;
     }
 
     this.cached = result;
-    return this.cached.photos;
+    return this.cached;
   }
 }
 

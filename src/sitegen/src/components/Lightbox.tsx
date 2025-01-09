@@ -2,12 +2,11 @@ import YARL, { type SlideImage } from "yet-another-react-lightbox";
 import Captions from "yet-another-react-lightbox/plugins/captions";
 import Thumbnails from "yet-another-react-lightbox/plugins/thumbnails";
 
-import type { Photo } from "../types";
-
 import "yet-another-react-lightbox/styles.css";
 import "yet-another-react-lightbox/plugins/captions.css";
 import "yet-another-react-lightbox/plugins/thumbnails.css";
 import { useEffect } from "react";
+import type { NewPhoto } from "../logic/process";
 
 const styles = {
   captionsTitleContainer: {
@@ -51,28 +50,28 @@ const Lightbox = ({
   onView,
   onClose,
 }: {
-  photos: Photo[];
+  photos: NewPhoto[];
   index: number | null;
   onView: (index: number) => void;
   onClose: () => void;
 }) => {
   const slides: SlideImage[] = photos.map((photo) => {
-    const fullSizes = photo.assets.filter((a) => !a.thumbnail);
-    if (fullSizes.length === 0) throw new Error("No full-size images found"); // assertion for compile-time check
-    const srcSet = fullSizes.map(({ url, width, height }) => ({
-      src: url,
+    const fullSizes = photo.sizes.filter((a) => !a.thumbnail);
+    if (fullSizes.length === 0) throw new Error("No full-size images found");
+    const srcSet = fullSizes.map(({ publicPath, width, height }) => ({
+      src: publicPath,
       width,
       height,
     }));
 
-    const defaultThumbnail = photo.assets.reduce(
+    const defaultThumbnail = photo.sizes.reduce(
       (acc, a) => (acc && acc.width > a.width ? acc : a),
-      photo.assets[0]
+      photo.sizes[0]
     );
-    if (!defaultThumbnail) throw new Error("No default thumbnail found"); // assertion for compile-time check
+    if (!defaultThumbnail) throw new Error("No default thumbnail found");
 
-    const { title, description } = photo;
-    const { url: src, width, height } = defaultThumbnail;
+    const { title, description } = photo.metadata;
+    const { publicPath: src, width, height } = defaultThumbnail;
     return { title, description, srcSet, src, width, height };
   });
 
