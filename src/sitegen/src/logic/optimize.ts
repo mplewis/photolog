@@ -3,6 +3,7 @@ import { dirname } from "path";
 import * as tmp from "tmp-promise";
 import { $ } from "zx";
 import prettyBytes from "pretty-bytes";
+import { existsSync } from "fs";
 
 export type TargetSize =
   | { maxWidth: number }
@@ -55,21 +56,32 @@ async function stripMetadata(path: string) {
   await $`exiftool -all= ${path}`;
 }
 
+/** Resize and compress an image to save bytes.　If the destination image already exists,
+ * it is assumed to be the desired result image and processing is skipped. */
 export async function optimizeImage(args: OptimizeImageArgs) {
   const { src, dst, targetSize, qualityButteraugli } = args;
 
-  await mkdir(dirname(dst), { recursive: true });
-  await tmp.withFile(async ({ path: resized }) => {
-    await resize(src, resized, targetSize);
-    await compressToQuality(resized, dst, qualityButteraugli);
-  });
-  await stripMetadata(dst);
+  const start = Date.now();
+  let skipped = true;
+  if (!existsSync(dst)) {
+    skipped = false;
+    await mkdir(dirname(dst), { recursive: true });
+    await tmp.withFile(async ({ path: resized }) => {
+      await resize(src, resized, targetSize);
+      await compressToQuality(resized, dst, qualityButteraugli);
+    });
+    await stripMetadata(dst);
+  }
 
+  const elapsed = (Date.now() - start) / 1000;
   const inBytes = (await stat(src)).size;
   const outBytes = (await stat(dst)).size;
+
   return {
     inBytes,
     outBytes,
+    elapsed,
+    skipped,
     outSize: prettyBytes(outBytes),
     ratio: outBytes / inBytes,
   };

@@ -9,14 +9,19 @@ import { dirname } from "path";
 import { z } from "zod";
 import { readFile } from "fs/promises";
 import { parse as yamlParse } from "yaml";
+import { optimizeImage } from "./optimize";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const PROJECT_ROOT = join(__dirname, "..", "..", "..", "..");
+const PROJECT_ROOT = join(__dirname, "..", "..");
 const PUBLIC_DIR = join(PROJECT_ROOT, "public");
+console.log({ PUBLIC_DIR });
 
 /** Length of hashes for filenames. Used to name content-addressed output JPG files. */
 const FILE_HASH_LEN = 8;
+
+/** Jpegli max butteraugli distance. Lower value = higher quality. 1.0 = visually lossless. */
+const QUALITY_BUTTERAUGLI = 1.0;
 
 type NewPhoto = {
   path: string;
@@ -110,13 +115,50 @@ async function _process(
     album: Object.keys(albums).find((a) => p.path.startsWith(`${a}/`)),
   }));
 
+  const jobsArgs = photos
+    .map((p) =>
+      p.sizes.map((s) => ({
+        src: p.path,
+        dst: s.publicPath,
+        args: {
+          src: p.absPath,
+          dst: s.absPath,
+          targetSize: { maxWidth: s.width },
+          qualityButteraugli: QUALITY_BUTTERAUGLI,
+        },
+      }))
+    )
+    .flat();
+
+  const optimResults = await runConc(
+    "Resize and optimize images",
+    jobsArgs.map(({ src, dst, args }) => async () => {
+      const result = await optimizeImage(args);
+      return { src, dst, result };
+    })
+  );
+
+  const optimUnskipped = optimResults.filter((r) => !r.result.skipped);
+  const skipCount = optimResults.length - optimUnskipped.length;
+  console.log(
+    `Optimized ${optimUnskipped.length} images (${skipCount} skipped)`
+  );
+  for (const { src, dst, result } of optimUnskipped) {
+    const { outSize, ratio, elapsed } = result;
+    const ratioPct = (ratio * 100).toFixed(1);
+    console.log(
+      `  ${src} -> ${dst}: ${outSize} (${ratioPct}%) ${elapsed.toFixed(1)}s`
+    );
+  }
+
   // TODO: Delete all extraneous files in this dir
   const allDstPaths = photos.map((p) => p.sizes.map((s) => s.absPath)).flat();
 
   console.dir(
     {
-      photos,
-      albums,
+      // photos,
+      // albums,
+      allDstPaths,
       inputFilesHash,
       srcDir,
       dstDir,
