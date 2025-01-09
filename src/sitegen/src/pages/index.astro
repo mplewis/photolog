@@ -1,55 +1,16 @@
 ---
-import type { Photo } from "../types";
+import { imagePipeline } from "../logic/process";
 import type { MetadataReport } from "../common/types";
 import MainLayout from "../layouts/MainLayout.astro";
 import App from "../components/App.tsx";
-import { describeMetadata } from "../logic/desc";
 import { readFile } from "fs/promises";
-import { thumbnailMaxWidthPx } from "../sizes";
 
 const metadataPath = "../../tmp/metadata.json";
-const imageRoot = "/photos";
 
 const raw = (await readFile(metadataPath)).toString();
 const metadata = JSON.parse(raw) as MetadataReport;
 
-const photos: Photo[] = [];
-for (const [key, meta] of Object.entries(metadata.photos)) {
-  const { sizes } = meta;
-
-  const { title, description } = describeMetadata(meta);
-  const { albums } = meta;
-  const date = new Date(meta.date as unknown as string); // HACK: it loads from JSON as a string
-  const urls = sizes.map(({ width, height, path }) => ({
-    width,
-    height,
-    url: `${imageRoot}/${path}`,
-    thumbnail: width <= thumbnailMaxWidthPx,
-  }));
-
-  const thumbnailCount = urls.filter((url) => url.thumbnail).length;
-  const fullSizeCount = urls.length - thumbnailCount;
-  if (thumbnailCount === 0) {
-    throw new Error(
-      `No thumbnails found for ${key}. Ensure at least one asset is smaller than ${thumbnailMaxWidthPx}px wide.`
-    );
-  }
-  if (fullSizeCount === 0) {
-    throw new Error(
-      `No full-size images found for ${key}. Ensure at least one asset is larger than ${thumbnailMaxWidthPx}px wide.`
-    );
-  }
-
-  photos.push({
-    title: title ?? null,
-    description,
-    date,
-    albums: albums ?? [],
-    assets: urls,
-  });
-}
-
-photos.sort((a, b) => b.date.getTime() - a.date.getTime());
+const photos = await imagePipeline.process();
 ---
 
 <MainLayout>
