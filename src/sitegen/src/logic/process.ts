@@ -206,7 +206,11 @@ async function _process(
   deleteExtraneous(dstDir, desiredFiles);
 
   // Sort photos by date descending
-  photos.sort((a, b) => b.metadata.date.getTime() - a.metadata.date.getTime());
+  photos.sort(
+    (a, b) =>
+      (b.metadata.date ?? new Date(0)).getTime() -
+      (a.metadata.date ?? new Date(0)).getTime()
+  );
 
   return { cacheFresh: false, inputFilesHash, photos, albums: flatAlbums };
 }

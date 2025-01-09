@@ -1,5 +1,4 @@
 import {
-  describeMetadata,
   parseCameraAndLens,
   parseExposure,
   parseLocalDate,
@@ -7,6 +6,7 @@ import {
 import { imagePipeline } from "../logic/process";
 
 const HOSTNAME = "https://photolog.mplewis.com";
+const BSKY_POST_LIMIT = 300 * 0.9; // 300 characters, with a buffer
 
 function smush(items: (string | false | undefined)[], joiner = " ") {
   return items.filter(Boolean).join(joiner);
@@ -34,11 +34,13 @@ const fullPhotos = processedPhotos.map((p) => {
 
 const mostRecentPhoto = fullPhotos[0];
 if (!mostRecentPhoto) throw new Error("No photos found");
+if (!mostRecentPhoto.date)
+  throw new Error(`Missing date for ${mostRecentPhoto.path}`);
 const basisDate = mostRecentPhoto.date.toISOString();
 
 const photos = fullPhotos.map((photo) => {
   const { metadata } = photo;
-  const { title, description } = describeMetadata(metadata);
+  const { title, description } = metadata;
   const { sizes } = photo;
   const { camera, lensAndFL } = parseCameraAndLens(metadata);
   const date = line("📅", parseLocalDate(metadata));
@@ -55,10 +57,12 @@ const photos = fullPhotos.map((photo) => {
     .map((s) => `#${s}`)
     .join(" ");
 
-  const desc = smush(
+  let desc = smush(
     [title, description, loc, date, cam, lens, exp, hashtags],
     "\n"
   );
+  if (desc.length > BSKY_POST_LIMIT)
+    desc = smush([title, loc, date, cam, lens, exp, hashtags], "\n");
 
   return { desc, sizes };
 });

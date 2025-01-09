@@ -16,7 +16,7 @@ export type Metadata = {
   cameraMake?: string | undefined;
   cameraModel?: string | undefined;
   cameraProfile?: string | undefined;
-  date: Date;
+  date?: Date | undefined;
   description?: string | undefined;
   exposureTime?: string | undefined;
   fNumber?: string | undefined;
@@ -177,7 +177,6 @@ export function parseExiftoolMetadata(raw: string): Metadata {
       );
     }
   }
-  if (!date) throw new Error("Could not parse date from metadata");
 
   let location = data.Location || data.Sublocation;
   if (
