@@ -12,9 +12,8 @@ async function withProgress<T>(
     total,
   });
   const retval = await fn(bar);
-  console.log(
-    `${desc} complete in ${((Date.now() - start) / 1000).toFixed(1)}s`
-  );
+  const sec = ((Date.now() - start) / 1000).toFixed(1);
+  console.log(`${desc} complete for ${total} items in ${sec}s`);
   return retval;
 }
 

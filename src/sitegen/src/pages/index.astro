@@ -10,9 +10,9 @@ const metadataPath = "../../tmp/metadata.json";
 const raw = (await readFile(metadataPath)).toString();
 const metadata = JSON.parse(raw) as MetadataReport;
 
-const photos = await imagePipeline.process();
+await imagePipeline.process();
 ---
 
 <MainLayout>
-  <App client:only albums={metadata.albums} photos={photos} />
+  <App client:only albums={metadata.albums} photos={[]} />
 </MainLayout>
