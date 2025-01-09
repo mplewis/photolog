@@ -6,7 +6,16 @@ import "yet-another-react-lightbox/styles.css";
 import "yet-another-react-lightbox/plugins/captions.css";
 import "yet-another-react-lightbox/plugins/thumbnails.css";
 import { useEffect } from "react";
-import type { NewPhoto } from "../logic/process";
+
+export interface LightboxPhoto {
+  caption: { title: string | undefined; description: string };
+  sizes: {
+    publicPath: string;
+    width: number;
+    height: number;
+    thumbnail: boolean;
+  }[];
+}
 
 const styles = {
   captionsTitleContainer: {
@@ -50,7 +59,7 @@ const Lightbox = ({
   onView,
   onClose,
 }: {
-  photos: NewPhoto[];
+  photos: LightboxPhoto[];
   index: number | null;
   onView: (index: number) => void;
   onClose: () => void;
@@ -70,7 +79,7 @@ const Lightbox = ({
     );
     if (!defaultThumbnail) throw new Error("No default thumbnail found");
 
-    const { title, description } = photo.metadata;
+    const { title, description } = photo.caption;
     const { publicPath: src, width, height } = defaultThumbnail;
     return { title, description, srcSet, src, width, height };
   });

@@ -1,13 +1,23 @@
 import classNames from "classnames";
 import dayjs from "dayjs";
 
-import { SCREEN_SIZES, THUMBNAIL_MAX_WIDTH_PX } from "../sizes";
+import { SCREEN_SIZES } from "../sizes";
 import type { Album } from "../common/types";
-import type { NewPhoto } from "../logic/process";
+
+export interface GalleryPhoto {
+  path: string;
+  date: Date;
+  sizes: {
+    publicPath: string;
+    width: number;
+    height: number;
+    thumbnail: boolean;
+  }[];
+}
 
 type DateGrouping = {
   dateGroup: string; // "May 2024", "June 2022", etc.
-  photos: NewPhoto[];
+  photos: GalleryPhoto[];
 };
 
 const gridSourceSizes = SCREEN_SIZES.map(
@@ -22,14 +32,14 @@ const Gallery = ({
   onOpen,
 }: {
   selectedAlbum: Album | null;
-  photos: NewPhoto[];
+  photos: GalleryPhoto[];
   index: number | null;
   onOpen: (index: number) => void;
 }) => {
   const dateGroups: DateGrouping[] = [];
   let currentGroup: DateGrouping | null = null;
   photos.forEach((photo) => {
-    const dateGroup = dayjs(photo.metadata.date).format("MMMM YYYY");
+    const dateGroup = dayjs(photo.date).format("MMMM YYYY");
     if (!currentGroup || currentGroup.dateGroup !== dateGroup) {
       currentGroup = { dateGroup, photos: [] };
       dateGroups.push(currentGroup);
@@ -57,7 +67,16 @@ const Gallery = ({
             {dateGroup}
           </h1>
 
-          <div className="grid grid-cols-3 s4:grid-cols-4 s5:grid-cols-5 s6:grid-cols-6 s7:grid-cols-7 s8:grid-cols-8 s9:grid-cols-9 s10:grid-cols-10 s11:grid-cols-11 s12:grid-cols-12">
+          <div
+            className={classNames(
+              "grid",
+              "grid-cols-3",
+              ...[
+                SCREEN_SIZES.map(
+                  ({ size, columns }) => `${size}:grid-cols-${columns}`
+                ),
+              ]
+            )}>
             {photos.map((photo) => {
               if (photo.sizes.length === 0)
                 throw new Error(`No sizes found for photo: ${photo.path}`);

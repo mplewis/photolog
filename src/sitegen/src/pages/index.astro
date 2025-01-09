@@ -2,10 +2,26 @@
 import { imagePipeline } from "../logic/process";
 import MainLayout from "../layouts/MainLayout.astro";
 import App from "../components/App.tsx";
+import { describeMetadata } from "../logic/desc";
 
 const { albums, photos } = await imagePipeline.process();
+
+// Rebuild photos into their minimal subset here to save space in the built site
+const renderedPhotos = photos.map((photo) => {
+  if (!photo.metadata.date)
+    throw new Error(`Missing date for photo: ${photo.path}`);
+  return {
+    path: photo.path,
+    album: photo.album,
+    date: photo.metadata.date,
+    sizes: photo.sizes,
+    caption: describeMetadata(photo.metadata),
+  };
+});
+
+// TODO: Fix photos.json structure
 ---
 
 <MainLayout>
-  <App client:only albums={albums} photos={photos} />
+  <App client:only albums={albums} photos={renderedPhotos} />
 </MainLayout>

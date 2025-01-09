@@ -1,5 +1,5 @@
 import dayjs from "dayjs";
-import type { ResizedMetadata } from "../common/types";
+import type { Metadata as _Metadata } from "./metadata";
 
 const CAPTION_MAX_LEN = 40; // Fits within iPhone Mini screen width
 const IGNORE_F_AT = 1.0; // Fujifilm reports f/1.0 for non-electronic lenses
@@ -7,7 +7,7 @@ const PROFILE_RE = /^Camera (.+)$/; // Match Fujifilm "Camera CLASSIC CHROME" an
 
 interface Metadata
   extends Pick<
-    ResizedMetadata,
+    _Metadata,
     | "cameraMake"
     | "cameraModel"
     | "cameraProfile"
@@ -178,7 +178,7 @@ export function chunksToLines(
 /** Parse a camera and lens from metadata, removing redundant brand names and focal lengths. */
 export function parseCameraAndLens(
   m: Pick<
-    Metadata,
+    _Metadata,
     "cameraMake" | "cameraModel" | "lensMake" | "lensModel" | "focalLength"
   >
 ) {
@@ -202,7 +202,7 @@ function parseCameraProfile(profile?: string): string | null {
 
 /** Parse exposure values (exposure time, F stop, ISO) from metadata. */
 export function parseExposure(
-  m: Pick<Metadata, "exposureTime" | "fNumber" | "iso" | "lensModel">
+  m: Pick<_Metadata, "exposureTime" | "fNumber" | "iso" | "lensModel">
 ): string[] {
   const s: string[] = [];
   if (m.exposureTime) s.push(`${m.exposureTime}s`);
@@ -218,7 +218,7 @@ export function parseExposure(
 }
 
 /** Parse a photo's locally-taken date from metadata. */
-export function parseLocalDate(m: Pick<Metadata, "localDate">) {
+export function parseLocalDate(m: Pick<_Metadata, "localDate">) {
   if (!m.localDate) return undefined;
   const [y, mo, d, h, mi, s] = m.localDate;
   const parsed = dayjs(`${y}-${mo}-${d} ${h}:${mi}:${s}`);
@@ -227,7 +227,7 @@ export function parseLocalDate(m: Pick<Metadata, "localDate">) {
 
 /** Summarize a set of camera metadata into a photo title and description. */
 export function describeMetadata(m: Metadata): {
-  title?: string | undefined;
+  title: string | undefined;
   description: string;
 } {
   if (!m.date) throw new Error(`Missing date for ${JSON.stringify(m)}`);
@@ -248,6 +248,7 @@ export function describeMetadata(m: Metadata): {
   const details = chunksToLines(CAPTION_MAX_LEN, dx).join("\n");
 
   // Build final description
+  // FIXME: This description never gets wrapped. Long descs can overflow.
   const description = [details, m.description]
     .filter(Boolean)
     .join("\n")
