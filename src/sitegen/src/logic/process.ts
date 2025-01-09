@@ -7,7 +7,7 @@ import { screenSizes } from "../sizes";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 import { z } from "zod";
-import { readFile } from "fs/promises";
+import { readFile, unlink } from "fs/promises";
 import { parse as yamlParse } from "yaml";
 import { optimizeImage } from "./optimize";
 
@@ -60,6 +60,39 @@ async function discoverAlbums(
     })
   );
   return Object.fromEntries(items);
+}
+
+function printOptimReport(
+  optimResults: {
+    src: string;
+    dst: string;
+    result: Awaited<ReturnType<typeof optimizeImage>>;
+  }[]
+) {
+  const optimUnskipped = optimResults.filter((r) => !r.result.skipped);
+  const skipCount = optimResults.length - optimUnskipped.length;
+  console.log(
+    `Optimized ${optimUnskipped.length} images (${skipCount} skipped)`
+  );
+  for (const { src, dst, result } of optimUnskipped) {
+    const { outSize, ratio, elapsed } = result;
+    const ratioPct = (ratio * 100).toFixed(1);
+    console.log(
+      `  ${src} -> ${dst}: ${outSize} (${ratioPct}%) ${elapsed.toFixed(1)}s`
+    );
+  }
+}
+
+async function deleteExtraneous(dir: string, desiredPaths: string[]) {
+  const allFilesInDstDir = new Set(glob.sync(join(dir, "**", "*")));
+  const filesToDelete = allFilesInDstDir.difference(new Set(desiredPaths));
+  await runConc(
+    "Delete extraneous files",
+    Array.from(filesToDelete).map((p) => async () => unlink(p))
+  );
+  for (const p of filesToDelete) {
+    console.log(`  ${p}`);
+  }
 }
 
 async function _process(
@@ -137,28 +170,13 @@ async function _process(
       return { src, dst, result };
     })
   );
+  printOptimReport(optimResults);
 
-  const optimUnskipped = optimResults.filter((r) => !r.result.skipped);
-  const skipCount = optimResults.length - optimUnskipped.length;
-  console.log(
-    `Optimized ${optimUnskipped.length} images (${skipCount} skipped)`
-  );
-  for (const { src, dst, result } of optimUnskipped) {
-    const { outSize, ratio, elapsed } = result;
-    const ratioPct = (ratio * 100).toFixed(1);
-    console.log(
-      `  ${src} -> ${dst}: ${outSize} (${ratioPct}%) ${elapsed.toFixed(1)}s`
-    );
-  }
-
-  // TODO: Delete all extraneous files in this dir
-  const allDstPaths = photos.map((p) => p.sizes.map((s) => s.absPath)).flat();
+  const desiredFiles = photos.map((p) => p.sizes.map((s) => s.absPath)).flat();
+  deleteExtraneous(dstDir, desiredFiles);
 
   console.dir(
     {
-      // photos,
-      // albums,
-      allDstPaths,
       inputFilesHash,
       srcDir,
       dstDir,
