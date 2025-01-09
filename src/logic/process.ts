@@ -22,6 +22,9 @@ const FILE_HASH_LEN = 8;
 /** Jpegli max butteraugli distance. Lower value = higher quality. 1.0 = visually lossless. */
 const QUALITY_BUTTERAUGLI = 1.0;
 
+/** Generated images are placed in this directory under `public/`. */
+const PUBLIC_PATH_PREFIX = "photos";
+
 /** A photo that has been processed by the image pipeline. */
 export type Photo = {
   path: string;
@@ -107,7 +110,6 @@ async function deleteExtraneous(dir: string, desiredPaths: string[]) {
 
 /** Process all images, skipping any that have already been processed. */
 async function _process(
-  publicPathPrefix: string,
   srcDir: string,
   dstDir: string,
   lastHash: string | null
@@ -153,7 +155,7 @@ async function _process(
       return {
         maxWidth: width,
         absPath: join(dstDir, name),
-        publicPath: `/${publicPathPrefix}/${name}`,
+        publicPath: `/${PUBLIC_PATH_PREFIX}/${name}`,
         thumbnail: width <= THUMBNAIL_MAX_WIDTH_PX,
       };
     }),
@@ -232,7 +234,6 @@ async function _process(
  * ```
  */
 export class ImagePipeline {
-  publicPathPrefix: string;
   srcDir: string;
   dstDir: string;
   cached:
@@ -244,9 +245,8 @@ export class ImagePipeline {
     | undefined;
 
   constructor() {
-    this.publicPathPrefix = mustEnv("PHOTOLOG_PUBLIC_SUBDIR_NAME");
     this.srcDir = mustEnv("PHOTOLOG_ORIGINALS_DIR");
-    this.dstDir = resolve(join(PUBLIC_DIR, this.publicPathPrefix));
+    this.dstDir = resolve(join(PUBLIC_DIR, PUBLIC_PATH_PREFIX));
   }
 
   /** Process all images, skipping any that have already been processed.
@@ -256,7 +256,6 @@ export class ImagePipeline {
     photos: Photo[];
   }> {
     const result = await _process(
-      this.publicPathPrefix,
       this.srcDir,
       this.dstDir,
       this.cached?.inputFilesHash ?? null
