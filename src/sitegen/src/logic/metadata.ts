@@ -16,7 +16,7 @@ export type Metadata = {
   cameraMake?: string | undefined;
   cameraModel?: string | undefined;
   cameraProfile?: string | undefined;
-  date?: Date | undefined;
+  date: Date;
   description?: string | undefined;
   exposureTime?: string | undefined;
   fNumber?: string | undefined;
@@ -177,6 +177,7 @@ export function parseExiftoolMetadata(raw: string): Metadata {
       );
     }
   }
+  if (!date) throw new Error("Could not parse date from metadata");
 
   let location = data.Location || data.Sublocation;
   if (
@@ -221,5 +222,9 @@ export function parseExiftoolMetadata(raw: string): Metadata {
 export async function readMetadata(inPath: string): Promise<Metadata> {
   $.quiet = true;
   const raw = await $`exiftool -s ${etFlags} ${inPath}`;
-  return parseExiftoolMetadata(raw.stdout);
+  try {
+    return parseExiftoolMetadata(raw.stdout);
+  } catch (e) {
+    throw new Error(`Error parsing metadata from ${inPath}: ${e}`);
+  }
 }
