@@ -1,8 +1,16 @@
 import { glob } from "glob";
-import { join, relative } from "path";
+import { join, relative, resolve } from "path";
 import { fastHashFiles, hashFileContents } from "./hash";
 import { readMetadata, type Metadata } from "./metadata";
 import { runConc } from "./conc";
+import { screenSizes } from "../sizes";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const PROJECT_ROOT = join(__dirname, "..", "..", "..", "..");
+const PUBLIC_DIR = join(PROJECT_ROOT, "public");
 
 /** Length of hashes for filenames. Used to name content-addressed output JPG files. */
 const FILE_HASH_LEN = 8;
@@ -22,16 +30,17 @@ function mustEnv(key: string): string {
 }
 
 async function _process(
-  origDir: string,
-  cacheDir: string,
+  publicPathPrefix: string,
+  srcDir: string,
+  dstDir: string,
   lastHash: string | null
 ): Promise<
   | { cacheFresh: true }
   | { cacheFresh: false; inputFilesHash: string; photos: NewPhoto[] }
 > {
   const paths = glob
-    .sync(join(origDir, "**", "*.jpg"))
-    .map((p) => ({ absPath: p, path: relative(origDir, p) }));
+    .sync(join(srcDir, "**", "*.jpg"))
+    .map((p) => ({ absPath: p, path: relative(srcDir, p) }));
 
   const inputFilesHash = await fastHashFiles(paths);
   if (lastHash === inputFilesHash) {
@@ -46,7 +55,7 @@ async function _process(
     })
   );
 
-  const photos = await runConc(
+  const withHashes = await runConc(
     "Hash file contents",
     withMetadata.map((p) => async () => {
       const hash = await hashFileContents(p.absPath);
@@ -54,12 +63,27 @@ async function _process(
     })
   );
 
+  const photos = withHashes.map((p) => ({
+    ...p,
+    sizes: screenSizes.map(({ width }) => {
+      const name = `${p.hash}-${width}.jpg`;
+      return {
+        width,
+        absPath: join(dstDir, name),
+        publicPath: `/${publicPathPrefix}/${name}`,
+      };
+    }),
+  }));
+
+  // TODO: Delete all extraneous files in this dir
+  const allDstPaths = photos.map((p) => p.sizes.map((s) => s.absPath)).flat();
+
   console.dir(
     {
-      // photos,
+      photos,
       inputFilesHash,
-      origDir,
-      cacheDir,
+      srcDir,
+      dstDir,
     },
     { depth: null }
   );
@@ -67,8 +91,9 @@ async function _process(
 }
 
 export class ImagePipeline {
-  origDir: string;
-  cacheDir: string;
+  publicPathPrefix: string;
+  srcDir: string;
+  dstDir: string;
   cached:
     | {
         inputFilesHash: string;
@@ -77,14 +102,16 @@ export class ImagePipeline {
     | undefined;
 
   constructor() {
-    this.origDir = mustEnv("PHOTOLOG_ORIGINALS_DIR");
-    this.cacheDir = mustEnv("PHOTOLOG_CACHE_DIR");
+    this.publicPathPrefix = mustEnv("PHOTOLOG_PUBLIC_SUBDIR_NAME");
+    this.srcDir = mustEnv("PHOTOLOG_ORIGINALS_DIR");
+    this.dstDir = resolve(join(PUBLIC_DIR, this.publicPathPrefix));
   }
 
   async process(): Promise<NewPhoto[]> {
     const result = await _process(
-      this.origDir,
-      this.cacheDir,
+      this.publicPathPrefix,
+      this.srcDir,
+      this.dstDir,
       this.cached?.inputFilesHash ?? null
     );
     if (result.cacheFresh) {

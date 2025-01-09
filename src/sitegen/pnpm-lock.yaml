@@ -50,6 +50,9 @@ importers:
       p-limit:
         specifier: ^6.2.0
         version: 6.2.0
+      pretty-bytes:
+        specifier: ^6.1.1
+        version: 6.1.1
       progress:
         specifier: ^2.0.3
         version: 2.0.3
@@ -62,6 +65,9 @@ importers:
       tailwindcss:
         specifier: ^3.4.4
         version: 3.4.4
+      tmp-promise:
+        specifier: ^3.0.3
+        version: 3.0.3
       typescript:
         specifier: ^5.4.5
         version: 5.4.5
@@ -71,6 +77,9 @@ importers:
       zod:
         specifier: ^3.24.1
         version: 3.24.1
+      zx:
+        specifier: ^8.3.0
+        version: 8.3.0
     devDependencies:
       '@types/common-tags':
         specifier: ^1.8.4
@@ -700,8 +709,14 @@ packages:
   '@types/estree@1.0.5':
     resolution: {integrity: sha512-/kYRxGDLWzHOB7q+wtSUQlFrtcdUccpfy+X+9iMBpHK8QLLhx2wIPYuS5DYtR9Wa/YlZAbIovy7qVdB1Aq6Lyw==}
 
+  '@types/fs-extra@11.0.4':
+    resolution: {integrity: sha512-yTbItCNreRooED33qjunPthRcSjERP1r4MqCZc7wv0u2sUkzTFp45tgUfS5+r7FrZPdmCCNflLhVSP/o+SemsQ==}
+
   '@types/hast@3.0.4':
     resolution: {integrity: sha512-WPs+bbQw5aCj+x6laNGWLH3wviHtoCv/P3+otBhbOhJgG8qtpdAMlTCxLtsTWA7LH1Oh/bFCHsBn0TPS5m30EQ==}
+
+  '@types/jsonfile@6.1.4':
+    resolution: {integrity: sha512-D5qGUYwjvnNNextdU59/+fI+spnwtTFmyQP0h+PfIOSkNfpU6AOICUOkm4i0OnSk+NyjdPJrxCDro0sJsWlRpQ==}
 
   '@types/knuth-shuffle-seeded@1.0.2':
     resolution: {integrity: sha512-hXz4CjcNvryCCIPDBC9E7WfR63J4eZ42TDvKxKq/jpRxuL4poaovEXadrAZb8HwEq5kqc/raF7LI9CclP5zbGQ==}
@@ -1826,6 +1841,10 @@ packages:
     resolution: {integrity: sha512-MkXsENfftWSRpzCzImcp4FRsCc3y1opwB73CfCNWyzMqArju2CrlMHlqB7VexKiPEOjGMbttv1r9fSCn5S610w==}
     engines: {node: '>=10'}
 
+  pretty-bytes@6.1.1:
+    resolution: {integrity: sha512-mQUvGU6aUFQ+rNvTIAcZuWGRT9a6f6Yrg9bHs4ImKF+HZCEK+plBvnAZYSIQztknZF2qnzNtr6F8s0+IuptdlQ==}
+    engines: {node: ^14.13.1 || >=16.0.0}
+
   pretty-format@29.7.0:
     resolution: {integrity: sha512-Pdlw/oPxN+aXdmM9R00JVC9WVFoCLTKJvDVLgmJ+qAffBMxsV85l/Lu7sNx4zSzPyoL2euImuEwHhOXdEgNFZQ==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
@@ -2081,6 +2100,13 @@ packages:
   tinyspy@2.2.1:
     resolution: {integrity: sha512-KYad6Vy5VDWV4GH3fjpseMQ/XU2BhIYP7Vzd0LG44qRWm/Yt2WCOTicFdvmgo6gWaqooMQCawTtILVQJupKu7A==}
     engines: {node: '>=14.0.0'}
+
+  tmp-promise@3.0.3:
+    resolution: {integrity: sha512-RwM7MoPojPxsOBYnyd2hy0bxtIlVrihNs9pj5SUvY8Zz1sQcQG2tG1hSr8PDxfgEB8RNKDhqbIlroIarSNDNsQ==}
+
+  tmp@0.2.3:
+    resolution: {integrity: sha512-nZD7m9iCPC5g0pYmcaxogYKggSfLsdxl8of3Q/oIbqCqLLIO9IAF0GWjX1z9NZRHPiXv8Wex4yDCaZsgEw0Y8w==}
+    engines: {node: '>=14.14'}
 
   to-fast-properties@2.0.0:
     resolution: {integrity: sha512-/OaKK0xYrs3DmxRYqL/yDc+FxFUVYhDlXMhRmv3z915w2HF1tnN1omB354j8VUGO/hbRzyD6Y3sA7v7GS/ceog==}
@@ -2447,6 +2473,11 @@ packages:
 
   zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
+
+  zx@8.3.0:
+    resolution: {integrity: sha512-L8mY3yfJwo3a8ZDD6f9jZzAcRWJZYcV8GauZmBxLB/aSTwaMzMIEVpPp2Kyx+7yF0gdvuxKnMxAZRft9UCawiw==}
+    engines: {node: '>= 12.17.0'}
+    hasBin: true
 
 snapshots:
 
@@ -3027,9 +3058,20 @@ snapshots:
 
   '@types/estree@1.0.5': {}
 
+  '@types/fs-extra@11.0.4':
+    dependencies:
+      '@types/jsonfile': 6.1.4
+      '@types/node': 20.14.7
+    optional: true
+
   '@types/hast@3.0.4':
     dependencies:
       '@types/unist': 3.0.2
+
+  '@types/jsonfile@6.1.4':
+    dependencies:
+      '@types/node': 20.14.7
+    optional: true
 
   '@types/knuth-shuffle-seeded@1.0.2': {}
 
@@ -4431,6 +4473,8 @@ snapshots:
       path-exists: 4.0.0
       which-pm: 2.0.0
 
+  pretty-bytes@6.1.1: {}
+
   pretty-format@29.7.0:
     dependencies:
       '@jest/schemas': 29.6.3
@@ -4781,6 +4825,12 @@ snapshots:
   tinypool@0.8.4: {}
 
   tinyspy@2.2.1: {}
+
+  tmp-promise@3.0.3:
+    dependencies:
+      tmp: 0.2.3
+
+  tmp@0.2.3: {}
 
   to-fast-properties@2.0.0: {}
 
@@ -5155,3 +5205,8 @@ snapshots:
   zod@3.24.1: {}
 
   zwitch@2.0.4: {}
+
+  zx@8.3.0:
+    optionalDependencies:
+      '@types/fs-extra': 11.0.4
+      '@types/node': 20.14.7
