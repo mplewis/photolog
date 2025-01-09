@@ -2,6 +2,8 @@
   "extends": "astro/tsconfigs/strictest",
   "compilerOptions": {
     "strict": true,
+    "target": "ESNext",
+    "module": "ESNext",
     "jsx": "react-jsx",
     "jsxImportSource": "react",
     "types": ["vitest/globals"]
