@@ -7,6 +7,7 @@ import "yet-another-react-lightbox/plugins/captions.css";
 import "yet-another-react-lightbox/plugins/thumbnails.css";
 import { useEffect } from "react";
 
+/** Photo data that can be displayed in the modal lightbox. */
 export interface LightboxPhoto {
   caption: { title: string | undefined; description: string };
   sizes: {

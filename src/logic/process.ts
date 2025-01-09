@@ -22,6 +22,7 @@ const FILE_HASH_LEN = 8;
 /** Jpegli max butteraugli distance. Lower value = higher quality. 1.0 = visually lossless. */
 const QUALITY_BUTTERAUGLI = 1.0;
 
+/** A photo that has been processed by the image pipeline. */
 export type Photo = {
   path: string;
   album: string | undefined;
@@ -39,15 +40,19 @@ const albumMetadataSchema = z.object({
   desc: z.string(),
   order: z.number(),
 });
+/** Metadata for an album which groups photos together. */
 export type AlbumMetadata = z.infer<typeof albumMetadataSchema>;
+/** Full data for an album which groups photos together. */
 export type Album = { key: string } & AlbumMetadata;
 
+/** Fetch the required environment variable or crash if it's unset. */
 function mustEnv(key: string): string {
   const value = import.meta.env[key];
   if (!value) throw new Error(`Missing environment variable: ${key}`);
   return value;
 }
 
+/** Discover album metadata inside directories, i.e. `tokyo/metadata.yaml`. */
 async function discoverAlbums(
   srcDir: string
 ): Promise<Record<string, AlbumMetadata>> {
@@ -65,6 +70,7 @@ async function discoverAlbums(
   return Object.fromEntries(items);
 }
 
+/** Print a report on which images were optimized in the most recent run. */
 function printOptimReport(
   optimResults: {
     src: string;
@@ -86,6 +92,7 @@ function printOptimReport(
   }
 }
 
+/** Delete files in the target directory that were not intended to exist from this run. */
 async function deleteExtraneous(dir: string, desiredPaths: string[]) {
   const allFilesInDstDir = new Set(glob.sync(join(dir, "**", "*")));
   const filesToDelete = allFilesInDstDir.difference(new Set(desiredPaths));
@@ -98,6 +105,7 @@ async function deleteExtraneous(dir: string, desiredPaths: string[]) {
   }
 }
 
+/** Process all images, skipping any that have already been processed. */
 async function _process(
   publicPathPrefix: string,
   srcDir: string,
@@ -213,6 +221,16 @@ async function _process(
   return { cacheFresh: false, inputFilesHash, photos, albums: flatAlbums };
 }
 
+/**
+ * An asset pipeline that ensures all images have the required optimized variants.
+ * Uses `SCREEN_SIZES` to determine which images to produce.
+ *
+ * Prefer use of the singleton to take advantage of app-widee caching:
+ * ```
+ * import { imagePipeline } from './process'
+ * const { albums, photos } = imagePipeline.process()
+ * ```
+ */
 export class ImagePipeline {
   publicPathPrefix: string;
   srcDir: string;
@@ -231,6 +249,8 @@ export class ImagePipeline {
     this.dstDir = resolve(join(PUBLIC_DIR, this.publicPathPrefix));
   }
 
+  /** Process all images, skipping any that have already been processed.
+   * If the pipeline has run recently, use the cached results if they're fresh. */
   async process(): Promise<{
     albums: Album[];
     photos: Photo[];

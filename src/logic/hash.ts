@@ -58,6 +58,7 @@ export async function fastHashFiles(
   return hashManyB36(withStats, (p) => [p.path, p.size, p.mtime.getTime()]);
 }
 
+/** Hash a file's contents using SHA-256 returning a base36-encoded string. */
 export async function hashFileContents(path: string): Promise<string> {
   const data = await readFile(path);
   return hashB36d(data);

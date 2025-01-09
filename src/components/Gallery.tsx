@@ -4,6 +4,7 @@ import dayjs from "dayjs";
 import { SCREEN_SIZES } from "../sizes";
 import type { Album } from "../logic/process";
 
+/** Photo data that can be rendered in the gallery. */
 export interface GalleryPhoto {
   path: string;
   date: Date;
@@ -15,6 +16,7 @@ export interface GalleryPhoto {
   }[];
 }
 
+/** Groups photos in the gallery together by month and year. */
 type DateGrouping = {
   dateGroup: string; // "May 2024", "June 2022", etc.
   photos: GalleryPhoto[];

@@ -3,12 +3,11 @@
   "type": "module",
   "version": "0.0.1",
   "scripts": {
-    "install-deps": "pnpm install",
-    "dev": "astro dev",
-    "start": "astro dev",
     "build": "astro check && astro build",
+    "dev": "astro dev",
     "preview": "astro preview",
-    "astro": "astro"
+    "start": "astro dev",
+    "test": "astro check && vitest"
   },
   "dependencies": {
     "@astrojs/check": "^0.7.0",

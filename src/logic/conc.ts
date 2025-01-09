@@ -2,6 +2,7 @@ import { cpus } from "os";
 import pLimit from "p-limit";
 import ProgressBar from "progress";
 
+/** Run a set of tasks displaying a progress bar. */
 async function withProgress<T>(
   total: number,
   desc: string,

@@ -8,10 +8,12 @@ import { imagePipeline } from "../logic/process";
 const HOSTNAME = "https://photolog.mplewis.com";
 const BSKY_POST_LIMIT = 300 * 0.9; // 300 characters, with a buffer
 
+/** Join string items together and omit the rest. */
 function smush(items: (string | false | undefined)[], joiner = " ") {
   return items.filter(Boolean).join(joiner);
 }
 
+/** Prefix a string with a symbol. If the string does not exist, return nothing. */
 function line(sym: string, s: string | undefined) {
   if (!s) return undefined;
   return `${sym} ${s}`;

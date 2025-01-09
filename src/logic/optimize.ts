@@ -6,11 +6,13 @@ import prettyBytes from "pretty-bytes";
 import { existsSync } from "fs";
 import { readMetadata } from "./metadata";
 
+/** The target maximum size for a resizing operation. */
 export type TargetSize =
   | { maxWidth: number }
   | { maxHeight: number }
   | { maxWidth: number; maxHeight: number };
 
+/** Arguments for the `optimizeImage` function. */
 export type OptimizeImageArgs = {
   src: string;
   dst: string;

@@ -5,10 +5,12 @@ import Gallery, { type GalleryPhoto } from "./Gallery";
 import Lightbox, { type LightboxPhoto } from "./Lightbox";
 import type { Album } from "../logic/process";
 
+/** Photo data, ready to be displayed in the gallery and lightbox. */
 export interface RenderedPhoto extends GalleryPhoto, LightboxPhoto {
   album: string | undefined;
 }
 
+/** Hook to allow hash-based URL navigation. */
 function useHash() {
   const [hash, _setHash] = useState(window.location.hash);
   const [updating, setUpdating] = useState(false);

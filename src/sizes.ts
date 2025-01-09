@@ -1,5 +1,8 @@
-export const THUMBNAIL_MAX_WIDTH_PX = 800; // anything wider than this is a "full" image
+/** Defines the width of a thumbnail vs. a "full" image. */
+export const THUMBNAIL_MAX_WIDTH_PX = 800;
 
+/** Defines screen sizes and corresponding number of columns.
+ * Used to implement frontend column layout and generate images of the correct sizes. */
 export const SCREEN_SIZES = [
   { size: "s3", width: 450, columns: 3 },
   { size: "s4", width: 600, columns: 4 },
