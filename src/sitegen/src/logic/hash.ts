@@ -1,7 +1,7 @@
 // @ts-expect-error
 import convertBase from "bigint-base-converter";
 import { runConc } from "./conc";
-import { stat } from "fs/promises";
+import { readFile, stat } from "fs/promises";
 
 const BASE36 = "0123456789abcdefghijklmnopqrstuvwxyz";
 
@@ -15,9 +15,19 @@ export function encodeB36(buf: Buffer): string {
  * @param s The string data to hash
  * @returns a base36 string representation of the SHA-256 hash of the input string
  */
-export async function hashB36(s: string): Promise<string> {
-  const data = new TextEncoder().encode(s);
+export async function hashB36s(s: string): Promise<string> {
+  const data = await new TextEncoder().encode(s);
   const hash = await crypto.subtle.digest("SHA-256", data);
+  return encodeB36(Buffer.from(hash));
+}
+
+/**
+ * Hash data using SHA-256 and return the result as a base36 string.
+ * @param d The data to hash
+ * @returns a base36 string representation of the SHA-256 hash of the input data
+ */
+export async function hashB36d(d: Buffer): Promise<string> {
+  const hash = await crypto.subtle.digest("SHA-256", d);
   return encodeB36(Buffer.from(hash));
 }
 
@@ -31,7 +41,7 @@ function hashManyB36<T>(
       .map((a) => a.toString())
       .join(":")
   );
-  return hashB36(rows.sort().join("\n"));
+  return hashB36s(rows.sort().join("\n"));
 }
 
 /** Generate a deterministic hash very quickly for a set of files based on file sizes and modification times. */
@@ -46,4 +56,9 @@ export async function fastHashFiles(
     })
   );
   return hashManyB36(withStats, (p) => [p.path, p.size, p.mtime.getTime()]);
+}
+
+export async function hashFileContents(path: string): Promise<string> {
+  const data = await readFile(path);
+  return hashB36d(data);
 }

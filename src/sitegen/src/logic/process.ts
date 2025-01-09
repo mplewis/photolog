@@ -1,9 +1,11 @@
 import { glob } from "glob";
 import { join, relative } from "path";
-import type { Photo } from "../types";
-import { fastHashFiles } from "./hash";
+import { fastHashFiles, hashFileContents } from "./hash";
 import { readMetadata, type Metadata } from "./metadata";
 import { runConc } from "./conc";
+
+/** Length of hashes for filenames. Used to name content-addressed output JPG files. */
+const FILE_HASH_LEN = 8;
 
 type NewPhoto = {
   path: string;
@@ -17,6 +19,51 @@ function mustEnv(key: string): string {
     throw new Error(`Missing environment variable: ${key}`);
   }
   return value;
+}
+
+async function _process(
+  origDir: string,
+  cacheDir: string,
+  lastHash: string | null
+): Promise<
+  | { cacheFresh: true }
+  | { cacheFresh: false; inputFilesHash: string; photos: NewPhoto[] }
+> {
+  const paths = glob
+    .sync(join(origDir, "**", "*.jpg"))
+    .map((p) => ({ absPath: p, path: relative(origDir, p) }));
+
+  const inputFilesHash = await fastHashFiles(paths);
+  if (lastHash === inputFilesHash) {
+    return { cacheFresh: true };
+  }
+
+  const withMetadata = await runConc(
+    "Read image metadata",
+    paths.map((p) => async () => {
+      const metadata = await readMetadata(p.absPath);
+      return { ...p, metadata };
+    })
+  );
+
+  const photos = await runConc(
+    "Hash file contents",
+    withMetadata.map((p) => async () => {
+      const hash = await hashFileContents(p.absPath);
+      return { ...p, hash: hash.slice(0, FILE_HASH_LEN) };
+    })
+  );
+
+  console.dir(
+    {
+      // photos,
+      inputFilesHash,
+      origDir,
+      cacheDir,
+    },
+    { depth: null }
+  );
+  return { cacheFresh: false, inputFilesHash, photos };
 }
 
 export class ImagePipeline {
@@ -35,34 +82,19 @@ export class ImagePipeline {
   }
 
   async process(): Promise<NewPhoto[]> {
-    const paths = glob
-      .sync(join(this.origDir, "**", "*.jpg"))
-      .map((p) => ({ absPath: p, path: relative(this.origDir, p) }));
-
-    const inputFilesHash = await fastHashFiles(paths);
-    if (this.cached?.inputFilesHash === inputFilesHash) {
-      console.log("No changed images, skipping reprocessing");
+    const result = await _process(
+      this.origDir,
+      this.cacheDir,
+      this.cached?.inputFilesHash ?? null
+    );
+    if (result.cacheFresh) {
+      if (!this.cached)
+        throw new Error("Cache evaluated as fresh but no cached data found!");
+      console.log("Cache is fresh, skipping processing");
       return this.cached.photos;
     }
 
-    const photos = await runConc(
-      "Read image metadata",
-      paths.map((p) => async () => {
-        const metadata = await readMetadata(p.absPath);
-        return { ...p, metadata };
-      })
-    );
-
-    console.dir(
-      {
-        // photos,
-        inputFilesHash,
-        origDir: this.origDir,
-        cacheDir: this.cacheDir,
-      },
-      { depth: null }
-    );
-    this.cached = { inputFilesHash, photos };
+    this.cached = result;
     return this.cached.photos;
   }
 }
