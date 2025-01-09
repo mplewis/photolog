@@ -1,0 +1,30 @@
+---
+import { imagePipeline } from "../logic/process";
+import MainLayout from "../layouts/MainLayout.astro";
+import App from "../components/App.tsx";
+import { describeMetadata } from "../logic/desc";
+
+const { albums, photos } = await imagePipeline.process();
+
+// Rebuild photos into their minimal subset here to save space in the built site
+const renderedPhotos = photos.map((photo) => {
+  if (!photo.metadata.date)
+    throw new Error(`Missing date for photo: ${photo.path}`);
+  return {
+    path: photo.path,
+    date: photo.metadata.date,
+    album: photo.album,
+    caption: describeMetadata(photo.metadata),
+    sizes: photo.sizes.map((s) => ({
+      publicPath: s.publicPath,
+      width: s.width,
+      height: s.height,
+      thumbnail: s.thumbnail,
+    })),
+  };
+});
+---
+
+<MainLayout>
+  <App client:only="react" albums={albums} photos={renderedPhotos} />
+</MainLayout>
