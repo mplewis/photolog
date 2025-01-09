@@ -98,5 +98,8 @@
   "devDependencies": {
     "wireit": "^0.14.5",
     "zx": "^8.1.4"
+  },
+  "dependencies": {
+    "yaml": "^2.7.0"
   }
 }

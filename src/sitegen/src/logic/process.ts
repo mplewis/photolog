@@ -6,6 +6,9 @@ import { runConc } from "./conc";
 import { screenSizes } from "../sizes";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
+import { z } from "zod";
+import { readFile } from "fs/promises";
+import { parse as yamlParse } from "yaml";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -21,12 +24,37 @@ type NewPhoto = {
   metadata: Metadata;
 };
 
+const albumMetadataSchema = z.object({
+  name: z.string(),
+  desc: z.string(),
+  order: z.number(),
+});
+export type AlbumMetadata = z.infer<typeof albumMetadataSchema>;
+
 function mustEnv(key: string): string {
   const value = import.meta.env[key];
   if (!value) {
     throw new Error(`Missing environment variable: ${key}`);
   }
   return value;
+}
+
+async function discoverAlbums(
+  srcDir: string
+): Promise<Record<string, AlbumMetadata>> {
+  const metadataPaths = await glob(join(srcDir, "*", "metadata.yaml"));
+  console.log(metadataPaths);
+  const items = await runConc(
+    "Read album metadata",
+    metadataPaths.map((p) => async () => {
+      const relPath = relative(srcDir, p);
+      const key = relPath.split("/")[0];
+      const raw = await readFile(p, "utf-8");
+      const data = yamlParse(raw);
+      return [key, albumMetadataSchema.parse(data)];
+    })
+  );
+  return Object.fromEntries(items);
 }
 
 async function _process(
@@ -78,9 +106,12 @@ async function _process(
   // TODO: Delete all extraneous files in this dir
   const allDstPaths = photos.map((p) => p.sizes.map((s) => s.absPath)).flat();
 
+  const albums = await discoverAlbums(srcDir);
+
   console.dir(
     {
-      photos,
+      // photos,
+      albums,
       inputFilesHash,
       srcDir,
       dstDir,
