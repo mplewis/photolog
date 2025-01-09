@@ -23,7 +23,7 @@ type DateGrouping = {
 const gridSourceSizes = SCREEN_SIZES.map(
   ({ width, columns }) =>
     `(max-width: ${width - 1}px) ${(100 / columns).toFixed(2)}vw`
-).join(",\n");
+).join(", ");
 
 const Gallery = ({
   selectedAlbum,
@@ -49,6 +49,12 @@ const Gallery = ({
 
   let runningIndex = 0;
 
+  const gridClassNames = classNames(
+    "grid",
+    "grid-cols-3",
+    ...[SCREEN_SIZES.map(({ size, columns }) => `${size}:grid-cols-${columns}`)]
+  );
+
   return (
     <div className="pt-[6rem]">
       {selectedAlbum && (
@@ -67,16 +73,7 @@ const Gallery = ({
             {dateGroup}
           </h1>
 
-          <div
-            className={classNames(
-              "grid",
-              "grid-cols-3",
-              ...[
-                SCREEN_SIZES.map(
-                  ({ size, columns }) => `${size}:grid-cols-${columns}`
-                ),
-              ]
-            )}>
+          <div className={gridClassNames}>
             {photos.map((photo) => {
               if (photo.sizes.length === 0)
                 throw new Error(`No sizes found for photo: ${photo.path}`);
