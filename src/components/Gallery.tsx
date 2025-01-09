@@ -89,6 +89,7 @@ const Gallery = ({
                   <picture>
                     <source sizes={gridSourceSizes} srcSet={srcSet} />
                     <img
+                      loading="lazy"
                       className={classNames(
                         "w-full h-full object-cover hover:border-8 border-transparent transition-all duration-300",
                         { "border-8": index === i }
