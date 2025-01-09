@@ -1,66 +1,110 @@
 # Photolog
 
-Static site generator for sharing your photos.
+The static site generator I use to share my photos.
+[View my live site](https://photolog.mplewis.com/).
 
-# TODO
+[![Gallery view of Photolog](docs/gallery.jpg)](docs/gallery.jpg)
 
-- Update imgpipel from Mocha to Vitest
-- Get linting working
-- CI/CD
-- Remove metadata merging
-- Add JPEG XL support
+![Lightbox view of Photolog](docs/lightbox.jpg)
 
-# Astro Starter Kit: Minimal
+# Features
+
+- Generated images have a content-based digest URL so your CDN and users'
+  browsers can cache them forever
+- Multiple resized variants of each photo so visitors can avoid downloading
+  oversized images on mobile devices
+- Images are compressed to a perceptually lossless level using
+  [Jpegli](https://opensource.googleblog.com/2024/04/introducing-jpegli-new-jpeg-coding-library.html)
+- Efficient static site output: 93 kB of HTML + CSS + JS gzipped for a gallery
+  of 229 photos
+- Parses EXIF metadata to include your camera settings (ISO, shutter speed,
+  F-stop) alongside each photo
+- Support for human-written `Title`, `Caption`, `Sublocation` EXIF fields
+  alongside each photo
+- [photos.json](https://photolog.mplewis.com/photos.json) API endpoint for
+  consumption by social media auto-post bots
+
+# Usage
+
+NOTE: This is a personal project which I use to publish my photos. You're
+welcome to fork it and modify it for your own use. If you want me to make this
+more of a generic project with friendly parameters and settings,
+[let me know!](https://bsky.app/profile/mplewis.com)
+
+## Install Dependencies
+
+Install this third-party software first:
+
+- [Node.js](https://nodejs.org)
+- [pnpm](https://pnpm.io)
+- [Imagemagick](https://imagemagick.org/)
+- [jpegli](https://github.com/google/jpegli)
+  - _This software is non-trivial to install on Mac. The Homebrew recipe doesn't
+    include the required `cjpegli` binary at this time. Sorry._
+
+Then install JS dependencies:
 
 ```sh
-npm create astro@latest -- --template minimal
+cd photolog
+pnpm install
 ```
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/withastro/astro/tree/latest/examples/minimal)
-[![Open with CodeSandbox](https://assets.codesandbox.io/github/button-edit-lime.svg)](https://codesandbox.io/p/sandbox/github/withastro/astro/tree/latest/examples/minimal)
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/withastro/astro?devcontainer_path=.devcontainer/minimal/devcontainer.json)
+## Build the Site
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+Point Photolog to your images using the environment variable:
 
-## 🚀 Project Structure
+| Environment Variable     | Description                                   | Example              |
+| ------------------------ | --------------------------------------------- | -------------------- |
+| `PHOTOLOG_ORIGINALS_DIR` | The directory containing your original images | `/path/to/my/photos` |
 
-Inside of your Astro project, you'll see the following folders and files:
+Then, run `pnpm build`:
 
-```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
+```sh
+export PHOTOLOG_ORIGINALS_DIR="/path/to/my/photos"
+pnpm build
 ```
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page
-is exposed as a route based on its file name.
+When the build completes, you can find your static site files inside `dist/`.
 
-There's nothing special about `src/components/`, but that's where we like to put
-any Astro/React/Vue/Svelte/Preact components.
+## Development
 
-Any static assets, like images, can be placed in the `public/` directory.
+To start the local dev server, run `pnpm dev`.
 
-## 🧞 Commands
+# Photo Structure
 
-All commands are run from the root of the project, from a terminal:
+Photolog supports a flat pile of photos, or you can assign each photo to an
+album:
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+```
+.
+├── DSCF8215.jpg
+├── DSCF8345.jpg
+├── DSCF8349.jpg
+├── tokyo
+│   ├── DSCF8429.jpg
+│   ├── DSCF8504.jpg
+│   ├── DSCF8731.jpg
+│   └── metadata.yaml
+└── osaka
+    ├── DSCF1181.jpg
+    ├── DSCF1633.jpg
+    ├── DSCF9981.jpg
+    └── metadata.yaml
+```
 
-## 👀 Want to learn more?
+Album directories must contain a `metadata.yaml` file describing the album's
+contents. The description will be displayed when the album is selected for
+viewing. Albums are ordered left to right (or top to bottom on mobile) in
+ascending `order`.
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into
-our [Discord server](https://astro.build/chat).
+```yaml
+order: 1
+name: Tokyo
+desc: Beautiful temples, incredible food, and so much nightlife
+```
 
 # TODO
 
-- Dynamic title for current album/image
+- CI/CD
+- Get linting working
+- Add JPEG XL support
