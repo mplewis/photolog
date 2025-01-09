@@ -3,11 +3,12 @@
   "type": "module",
   "version": "0.0.1",
   "scripts": {
-    "build": "astro check && astro build",
+    "build": "astro check && vitest --run && astro build",
+    "check": "astro check",
     "dev": "astro dev",
     "preview": "astro preview",
     "start": "astro dev",
-    "test": "astro check && vitest"
+    "test": "vitest"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.4",
