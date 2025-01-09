@@ -14,8 +14,13 @@ const renderedPhotos = photos.map((photo) => {
     path: photo.path,
     date: photo.metadata.date,
     album: photo.album,
-    sizes: photo.sizes,
     caption: describeMetadata(photo.metadata),
+    sizes: photo.sizes.map((s) => ({
+      publicPath: s.publicPath,
+      width: s.width,
+      height: s.height,
+      thumbnail: s.thumbnail,
+    })),
   };
 });
 ---
