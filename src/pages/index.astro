@@ -3,7 +3,10 @@ import { imagePipeline } from "../logic/process";
 import MainLayout from "../layouts/MainLayout.astro";
 import App from "../components/App.tsx";
 import { describeMetadata } from "../logic/desc";
+import { loadConfig } from "../logic/config";
 
+const config = await loadConfig();
+console.log({ config });
 const { albums, photos } = await imagePipeline.process();
 
 // Rebuild photos into their minimal subset here to save space in the built site

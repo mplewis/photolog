@@ -24,6 +24,7 @@
     "classnames": "^2.5.1",
     "common-tags": "^1.8.2",
     "dayjs": "^1.11.13",
+    "env-paths": "^3.0.0",
     "glob": "^10.4.2",
     "knuth-shuffle-seeded": "^1.0.6",
     "node-fetch": "^3.3.2",
