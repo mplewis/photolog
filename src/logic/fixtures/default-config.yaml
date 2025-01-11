@@ -1,0 +1,16 @@
+# This is the config file for Photolog: https://github.com/mplewis/photolog
+# Directory containing your photos and albums.
+imageDir: /path/to/your/photos
+# Where your site is hosted. Used for Open Graph tags.
+siteURL: https://example.com
+# Title of your site. Used in the browser and for Open Graph tags.
+siteTitle: My Photolog
+# Description of your site. Used for Open Graph tags.
+siteDescription: A place for me to share my photos
+# In the generated website, images are placed in this directory under `public/`.
+# publicPathPrefix: "photos"
+# How many characters to use in the hash part of resized image filenames.
+# fileHashLen: 8
+# Image quality when adding lossy image optimization. This is the jpegli max Butteraugli distance.
+# Lower value = higher quality, 1.0 = visually lossless.
+# qualityButteraugli: 1.0
