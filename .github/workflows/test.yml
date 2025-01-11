@@ -26,7 +26,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: "pnpm"
       - name: Install Exiftool
-        uses: woss/exiftool-action@v12.87
+        uses: woss/exiftool-action@v13.11
       - name: Install dependencies
         run: pnpm install
       - name: Run tests
