@@ -19,7 +19,7 @@
     "@netlify/functions": "^3.0.0",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
-    "astro": "^5.1.5",
+    "astro": "^5.13.1",
     "b36": "^1.0.0",
     "bigint-base-converter": "^0.1.3",
     "classnames": "^2.5.1",
