@@ -39,7 +39,7 @@
     "yaml": "^2.7.0",
     "yet-another-react-lightbox": "^3.21.7",
     "zod": "^3.24.1",
-    "zx": "^8.3.0"
+    "zx": "^8.8.5"
   },
   "devDependencies": {
     "@types/common-tags": "^1.8.4",
