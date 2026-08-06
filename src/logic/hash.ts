@@ -27,7 +27,7 @@ export async function hashB36s(s: string): Promise<string> {
  * @returns a base36 string representation of the SHA-256 hash of the input data
  */
 export async function hashB36d(d: Buffer): Promise<string> {
-  const hash = await crypto.subtle.digest("SHA-256", d);
+  const hash = await crypto.subtle.digest("SHA-256", new Uint8Array(d));
   return encodeB36(Buffer.from(hash));
 }
 
