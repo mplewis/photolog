@@ -50,7 +50,7 @@ export function summarizeLensFocalLength(
   if (lens.match(/\d+-\d+mm/)) return lensAndFL;
 
   // Parse the prime focal length from the lens name
-  const lensFLMatch = lens.match(/(\d+(.\d+)?)mm/);
+  const lensFLMatch = lens.match(/(\d+(.\d+)?)\s*mm/);
   if (!lensFLMatch || !lensFLMatch[1]) return lensAndFL;
   const parsedFocalLength = parseFloat(lensFLMatch[1]);
 

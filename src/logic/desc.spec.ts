@@ -17,6 +17,11 @@ describe("summarizeLensFocalLength", () => {
       ["back triple camera 1.54mm f/2.4"],
     ],
     ["Nikkor AF 50mm f/1.8D", 50, ["Nikkor AF 50mm f/1.8D"]],
+    [
+      "Zeiss Sonnar T* FE 35 mm F2.8 ZA (SEL35F28Z)",
+      35,
+      ["Zeiss Sonnar T* FE 35 mm F2.8 ZA (SEL35F28Z)"],
+    ],
   ] as const;
 
   for (const [lens, focalLength, summary] of cases) {
