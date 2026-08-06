@@ -47,9 +47,6 @@ importers:
       dayjs:
         specifier: ^1.11.21
         version: 1.11.21
-      glob:
-        specifier: ^10.5.0
-        version: 10.5.0
       knuth-shuffle-seeded:
         specifier: ^1.0.6
         version: 1.0.6

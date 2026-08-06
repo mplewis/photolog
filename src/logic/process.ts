@@ -1,5 +1,5 @@
-import { glob } from "glob";
 import { join, relative, resolve } from "path";
+import { globSync } from "fs";
 import { fastHashFiles, hashFileContents } from "./hash";
 import { readMetadata, type Metadata } from "./metadata";
 import { runConc } from "./conc";
@@ -59,7 +59,7 @@ function mustEnv(key: string): string {
 async function discoverAlbums(
   srcDir: string
 ): Promise<Record<string, AlbumMetadata>> {
-  const metadataPaths = await glob(join(srcDir, "*", "metadata.yaml"));
+  const metadataPaths = globSync(join(srcDir, "*", "metadata.yaml"));
   const items = await runConc(
     "Read album metadata",
     metadataPaths.map((p) => async () => {
@@ -97,7 +97,7 @@ function printOptimReport(
 
 /** Delete files in the target directory that were not intended to exist from this run. */
 async function deleteExtraneous(dir: string, desiredPaths: string[]) {
-  const allFilesInDstDir = new Set(glob.sync(join(dir, "**", "*")));
+  const allFilesInDstDir = new Set(globSync(join(dir, "**", "*")));
   const filesToDelete = allFilesInDstDir.difference(new Set(desiredPaths));
   await runConc(
     "Delete extraneous files",
@@ -122,9 +122,9 @@ async function _process(
       photos: Photo[];
     }
 > {
-  const paths = glob
-    .sync(join(srcDir, "**", "*.jpg"))
-    .map((p) => ({ absPath: p, path: relative(srcDir, p) }));
+  const paths = globSync(join(srcDir, "**", "*.jpg")).map(
+    (p) => ({ absPath: p, path: relative(srcDir, p) })
+  );
 
   const inputFilesHash = await fastHashFiles(paths);
   if (lastHash === inputFilesHash) {
